@@ -1,4 +1,6 @@
 /*
+* Variables and Mutability
+*
 * By default, variables are immutable. However, you still have the option to make your variables
 * mutable.
 *
