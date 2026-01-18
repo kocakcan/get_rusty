@@ -1,4 +1,50 @@
 /*
 * Shadowing
 *
+* You can declare a new variable with the same name as a previous variable. Rustaceans say that the
+* first variable is shadowed by the second, which means that the second variable is what the
+* compiler will see when you use the name of the variable. In effect, the second variable
+* overshadows the first, taking any uses of the variable name to itself until either it itself is
+* shadowed or the scope ends. We can shadow a variable by using the same variable's name and
+* repeating the use of the let keyword.
+*/
+
+fn main() {
+    let x = 5;
+    let x = x + 1;
+
+    {
+        let x = x * 2;
+        println!("The value of x in the inner scope is: {x}");
+    }
+    println!("The value of x is: {x}");
+    let name = "Can";
+    print!("My name, {name}, is ");
+    let name = name.len();
+    println!("{name} characters long.");
+}
+
+/*
+* This program first binds x to a value of 5. Then it creates a new variable x by repeating let x
+* =, taking the original value and adding 1 so the value of x is then 6. Then, within an inner
+* scope created by the curly brackets, the third let statement also shadows x and creates a new
+* variable, multiplying the previous value by 2 to give x a value of 12. When that scope is over,
+* the inner shadowing ends and x returns to being 6.
+*
+* Shadowing is different from making a variable as mut because we'll get compile-time error if we
+* accidentally try to reassign to this variable without using the ley keyword. By using let, we can
+* perform a few transformations on a value but have the variable be immutable after those
+* transformations have been completed.
+*
+* The other difference between mut and shadowing is that because we're effectively creating a new
+* variable when we use the let keyword again, we can change the type of the value but reuse the
+* same name. For example, say our program asks a user to show how many spaces they want between
+* some text by inputting space characters, and then we want to store that input as a number:
+*
+*   let spaces = "  ";
+*   let spaces = spaces.len();
+* The first spaces variable is a string type and the second spaces variable is a number type.
+* Shadowing thus spares us from having to come up with different names, such as spaces_str and
+* spaces_num; Instead, we can reuse the simpler spaces name. However, if we try to use mut for
+* this, we'll get a compile-time error saying we're not allowed to mutate a variable's type.
 */
