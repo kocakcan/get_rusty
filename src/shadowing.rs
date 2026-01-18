@@ -32,7 +32,7 @@ fn main() {
 * the inner shadowing ends and x returns to being 6.
 *
 * Shadowing is different from making a variable as mut because we'll get compile-time error if we
-* accidentally try to reassign to this variable without using the ley keyword. By using let, we can
+* accidentally try to reassign to this variable without using the let keyword. By using let, we can
 * perform a few transformations on a value but have the variable be immutable after those
 * transformations have been completed.
 *
