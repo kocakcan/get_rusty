@@ -98,4 +98,102 @@ fn main() {
 * safer versus using a language with fewer protections.
 *
 * Ownership as a Discipline for Memory Safety
+*
+* Since safety is the absence of undefined behaviour, and since ownership is about safety, then we
+* need to understand ownership in terms of the undefined behaviours it prevents.
+*
+* Memory is the space where data is stored during the execution of a program. There are many ways
+* to think about memory:
+*
+* - You can think of memory at a low level like "memory is an array of bytes" or "memory is the
+* pointers I get back from the malloc".
+* The high-level model is too abstract to explain how Rust works. You will need to understand the
+* concept of a pointer, for instance. The low-level model is too concrete to explain how Rust
+* works. Rust does not allow you to interpret memory as an array of bytes, for instance.
+*
+* Rust provides a particular way to think about memory. Ownership is a discipline for safely using
+* memory within that way of thinking.
+*
+* Variables Live in the Stack
+*
+*   fn main() {
+*       let n = 5;              -> L1
+*       let y = plus_one(n);    -> L3
+*       println!("The value of y is: {y}");
+*   }
+*
+*   fn plus_one(x: i32) -> i32 {
+*       x + 1                   -> L2
+*   }
+* Variables live in frames. A frame is a mapping from variables to values within a single scope,
+* such as a function. For example:
+*
+* - The frame for main at location L1 holds n = 5;
+* - The frame for plus_one at L2 holds x = 5;
+* - The frame for main at location L3 holds n = 5, y = 6;
+* Frames are organized into a stack of currently-called-functions. For example, at L2 the frame for
+* main sits above the frame for the called function plus_one. After a function returns, Rust
+* deallocates the function's frame. (Deallocation is also called freeing or dropping and we use
+* those terms interchangeably.) This sequence of frames is called a stack because the most recent
+* frame added is always the next frame freed.
+*
+* When an expression reads a variable, the variable's value is copied from its slot in the stack
+* frame. For example, if we run this program:
+*
+*   let a = 5;      -> L1
+*   let mut b = a;  -> L2
+*   b += 1;         -> L3
+* The value of a is copied into b, and a is left unchanged, even after changing b.
+*
+* Boxes Live in the Heap
+*
+* However, copying data can take up a lot of memory. For example, here's a slightly different
+* program. This program copies an array with 1 million elements:
+*
+*   let a = [0; 1_000_000];
+*   let b = a;
+* Copying a into b causes the main frame to contain 2 million elements.
+*
+* To transfer access to data without copying it, Rust uses pointers. A pointer is a value that
+* describes a location in memory. The value that a pointer points-to is called its pointee. One
+* common way to make a pointer is to allocate memory in the heap. The heap is a separate region of
+* memory where data can live indefinitely. Heap data is not tied to a specific stack frame. Rust
+* provides a construct called Box for putting data on the heap. For example, we can wrap the
+* million-element array in Box::bew like this:
+*
+*   let a = Box::new([0; 1_000_000]);
+*   let b = a;
+* Now, there is only ever a single array at a time. At L1, the value of a is a pointer to the array
+* inside the heap. The statement let b = a copies the pointer from a into b, but the pointed-to
+* data is not copied.
+*
+* Rust Does Not Permit Manual Memory Management
+*
+* Memory management is the process of allocating memory and deallocating memory. In other words,
+* it's the process of finding unused memory and later returning that memory when it is no longer
+* used. Stack frames are automatically managed by Rust. When a function is called, Rust allocates a
+* stack frame for the called function. When the call ends, Rust deallocates the stack frame.
+*
+* As we saw above, heap data is allocated when calling Box::new(..). But when is heap data
+* deallocated? Imagine that Rust had a free() function that frees a heap allocation. Imagine that
+* Rust let a programmer call free whenever they wanted. This kind of "manual" memory management
+* easily leads to bugs. For example, we could read a pointer to freed memory.
+*
+*   let b = Box::new([0; 100]);
+*   free(b);
+*   assert!(b[0] == 0);
+* Here, we allocate an array on the heap. Then we call free(b), which deallocates the heap memory
+* of b. Therefore the value b is a pointer to invalid memory. No undefined behaviour has happened
+* yet! The program is still safe at L2. It's not necessarily a problem to have an invalid pointer.
+*
+* The undefined behaviour happens when we try to use the pointer by reading b[0]. That would
+* attempt to access invalid memory, which could cause the program to crash. Or worse, it could not
+* crash and return arbitrary data. Therefore, this program is unsafe.
+*
+* Rust does not allow programs to manually deallocate memory. That policy avoids the kinds of
+* undefined behaviours shown above.
+*
+* A Box's Owner Manages Deallocation
+*
+*
 */
