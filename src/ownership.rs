@@ -7,16 +7,16 @@
 * Safety is the Absence of Undefined Behaviour
 */
 
-fn read(y: bool) {
-    if y {
-        println!("y is true!");
-    }
-}
-
-fn main() {
-    let x = true;
-    read(x);
-}
+// fn read(y: bool) {
+//     if y {
+//         println!("y is true!");
+//     }
+// }
+//
+// fn main() {
+//     let x = true;
+//     read(x);
+// }
 
 /*
 * We can make this program unsafe to execute by moving the call to read before the definition of x:
@@ -195,5 +195,136 @@ fn main() {
 *
 * A Box's Owner Manages Deallocation
 *
+* Instead, Rust automatically frees a box's heap memory. If a variable is bound to a box, when Rust
+* deallocates the variable's frame, then Rust deallocates the box's heap memory.
 *
+*   fn main() {
+*       let a_num = 4;              -> L1
+*       make_and_drop();            -> L3
+*   }
+*
+*   fn make_and_drop() {
+*       let a_box = Box::new(5);    -> L2
+*   }
+* At L1, before calling make_and_drop, the state of memory is just the stack frame for main. Then
+* at L2, while calling make_and_drop, a_box points to 5 on the heap. Once make_and_drop is
+* finished, Rust deallocates its stack frame. make_and_drop contains the variable a_box, so Rust
+* also deallocates the heap data in a_box. Therefore the heap is empty at L3.
+*
+* The box's heap memory has been successfully managed. But what if we abused this system? What
+* happens when we bind two variables to a box?
+*
+*   let a = Box::new([0; 1_000_000]);
+*   let b = a;
+* The boxed array has now been bound to both a and b. By our "almost correct" principle, Rust would
+* try to free the box's heap memory twice on behalf of both variables. That's undefined behaviour
+* too!
+*
+* To avoid this situation, we finally arrive at ownership. When a is bound to Box::new([0;
+ * 1_000_000]), we say that a owns the box. The statement let b = a moves ownership of the box
+* from a to b. Given these concepts, Rust's policy for freeing boxes is more accurately described
+* as: If a variable owns a box, when Rust deallocates the variable's frame, then Rust deallocates
+* the box's heap memory.
+*
+* In the example above, b owns the boxed array. Therefore when the scope ends, Rust deallocates the
+* box only once on behalf of b, not a.
+*
+* Collections Use Boxes
+*
+* Boxes are used by Rust data structures like Vec, String, and HashMap to hold a variable number of
+* elements. For example, here's a program that creates, moves, and mutates a string:
+*
+*   fn main() {
+*       let first = String::from("Ferris"); -> L1
+*       let full = add_suffix(first);       -> L4
+*       println!("{full}");
+*   }
+*
+*   fn add_suffix(mut name: String) -> String {
+*       name.push_str(" Jr.");  -> L2 & L3
+*       name
+*   }
+* 1. At L1, the string "Ferris" has been allocated on the heap. It is owned by first.
+* 2. At L2, the function add_suffix(first) has been called. This moves ownership of the string from
+*    first to name. The string data is not copied, but the pointer to the data is copied.
+* 3. At L3, the function name.push_str(" Jr.") resizes the string's heap allocation. This does
+*    three things. First, it creats a new larger allocation. Second, it writes "Ferris Jr." into
+*    the new allocation. Third, it frees the original heap memory. first now points to the
+*    deallocated memory.
+* 4. At L4, the frame for add_suffix is gone. This function returned name, transferring ownership
+*    of the string to full.
+*
+* Variables Cannot Be Used After Being Moved
+*
+* The string program helps illustrate a key safety principle for ownership. Imagine that first were
+* used in main after calling add_suffix. We can simulate such a program and see the undefined
+* behaviour that results:
+*
+*   fn main() {
+*       let first = String::from("Ferris");
+*       let full = add_suffix(first);
+*       println!("{full}, originally {first}"); -> L1 // first is now used here!
+*   }
+*
+*   fn add_suffix(mut name: String) {
+*       name.push_str(" Jr.");
+*       name
+*   }
+* first points to deallocated memory after calling add_suffix. Reading first in println! would
+* therefore be a violation of memory safety (undefined behaviour). Remember: it's not a problem
+* that first points to deallocated memory. It's a probilem that we tried to use first after it
+* became invalid.
+*
+* Thankfully, Rust will refuse to compile this program, giving the following error: value borrowed
+* here after move or some shit like that.
+*
+* Let's walk through the steps of this error. Rust says that first is moved when we called
+* add_suffix(first) on line 3. The error clarifies that first is moved beucase it has type String,
+* which does not implement Copy. Finally, the error says that we use first after being moved (it's
+* borrowed).
+*
+* So if you move a variable, Rust will stop you from using that variable later. More generally, the
+* compiler will enforce this principle: If a variable x moves ownership of heap data to another
+* variable y, then x cannot be used after the move.
+*
+* Moving ownership of heap data avoid undefined behavior from reading deallocated memory.
+*
+* Cloning Avoids Moves
+*
+* One way to avoid moving data is to clone it using the .clone() method. For example, we can fix
+* the safety issue in the previous program with a clone:
+*
+*   fn main() {
+*       let first = String::from("Ferris");
+*       let first_clone = first.clone();        -> L1
+*       let full = add_suffix(first_clone);     -> L2
+*       println!("{full}, originally {first}");
+*   }
+*
+*   fn add_suffix(mut name: String) -> String {
+*       name.push_str(" Jr.");
+*       name
+*   }
+* At L1, first_clone did not "shallow" copy the pointer in first, but instead "deep" copied the
+* string data into a new heap allocation. Therefore at L2, while first_clone has been moved and
+* invalidated by add_suffix, the original first variable is unchanged. It is safe to continue using
+* first.
+*
+* Summary
+*
+* Ownership is primarily a discipline of heap management:
+* - All heap data must be owned by exactly one variable.
+* - Rust deallocates heap data once its owner goes out of scope.
+* - Ownership can be transferred by moves, which happen on assignments and function calls.
+* - Heap data can only be accessed through its current owner, not a previous owner.
 */
+fn main() {
+    let first = String::from("Can");
+    let full = add_suffix(first);
+    println!("My full name is {full}");
+}
+
+fn add_suffix(mut name: String) -> String {
+    name.push_str(" Kocak");
+    name
+}
