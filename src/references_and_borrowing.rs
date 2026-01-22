@@ -120,6 +120,11 @@ fn main() {
     let m2 = String::from("world");
     greet(&m1, &m2);
     let s = format!("{} {}", m1, m2);
+
+    let x: Box<i32> = Box::new(-1);
+    let x_abs1 = i32::abs(*x);
+    let x_abs2 = x.abs();
+    assert_eq!(x_abs1, x_abs2);
 }
 
 fn greet(g1: &String, g2: &String) {
