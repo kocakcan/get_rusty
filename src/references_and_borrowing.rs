@@ -113,6 +113,21 @@
 *    reference to a box r: &Box<i32> will insert two dereferences.
 * 3. This conversion also works the opposite direction. The function str::len expects a reference
 *    &str. If you call len on an owned String, then Rust will insert a single borrowing operator.
+*
+* Rust Avoids Simultaneous Aliasing and Mutation
+*
+* Pointers are a powerful and dangerous feature because they enable aliasing. Aliasing is accessing
+* the same data through different variables. On its own, aliasing is harmless. But combined with
+* mutation, we have a recipe for disaster. One variable can "pull the rug out" from another
+* variable in many ways, for example:
+*
+* - By deallocating the aliased data, leaving the other variable to point to deallocated memory.
+* - By mutating the aliased data, invalidating runtime properties expected by the other variable.
+* - By concurrently mutating the aliased data, causing a data race with nondeterministic behaviour
+* for the other variable.
+*
+* Unlike arrays which have a fixed length, vectors have a variable length by storing their elements
+* in the heap. For example, Vec::push adds an element to the end of a vector, like this:
  */
 
 fn main() {
