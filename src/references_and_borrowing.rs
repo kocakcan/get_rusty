@@ -354,6 +354,94 @@
 *
 * However, in the else-block, c is not used. *v immediately regains the W permission on entry to
 * the else-block.
+*
+* Data Must Outlive All Of Its References
+*
+* As a part of the Pointer Safety Principle, the borrow checker enforces that data must outlive any
+* references to it. Rust enforces this property in two ways. The first way deals with references
+* that are created and dropped within the scope of a single function. For example, say we tried to
+* drop a string while holding a reference to it:
+*
+*   let s = String::from("Hello world");
+*   let s_ref = &s;                         -> s        | R
+*                                           -> s_ref    | RO
+*                                           -> *s_ref   | R
+*   drop(s);                                -> requires own and read permissions
+*   println!("{}", s_ref);
+* To catch these kinds of errors, Rust uses the permissions we've already discussed. The borrow &s
+* removes the O permission from s. However, drop expects the O permission, leading to a permission
+* mismatch.
+*
+* The key idea is that in this example, Rust know how long s_ref lives. But Rust needs a different
+* enforcement mechanism when it doesn't know how long a reference lives. Specifically, when
+* references are either input to a function, or output from a function. For example, here is a safe
+* function that returns a reference to the first element in a vector:
+*
+*   fn first(strings: &Vec<String>) -> &String {
+*       let s_ref = &strings[0];
+*       s_ref
+*   }
+* This snippet introduces a new kind of permission, the flow permission F. The F permission is
+* expected whenever an expression uses an input reference (like &strings[0]), or returns an output
+* reference (like return s_ref).
+*
+* Unlike RWO permissions, F does not change throughout the body of a function. A reference has the
+* F permission if it's allowed to be used (that is, to flow) in a particular expression. For
+* example, let's say we change first to a new function first_or that includes a default parameter:
+*
+*   fn first_or<'a, 'b, 'c>(strings: &'a Vec<String>, default: &'b String) -> &'c String {
+*       if strings.len() > 0 {
+*           &strings[0]
+*       } else {
+*           default
+*       }
+*   }
+* This function no longer compiles, because the expressions &strings[0] and default lack the
+* necessary F permission to be returned. But why? Rust gives the following error: The message
+* "missing lifetime specifier" is a bit mysterous, but the help message provides some useful
+* context. If Rust just looks at the function signature, it doesn't know whether the output &String
+* is a reference to either strings or default. To understand why that matters, let's say we used
+* first_or like this:
+*
+*   fn main() {
+*       let strings = vec![];
+*       let defaul = String::from("default");
+*       let s = first_or(&strings, &default);
+*       drop(default);
+*       println!("{}", s);;
+*   }
+* This program is unsafe if first_or allows default to flow into the return value. Like the
+* previous example, drop could invalidate s. Rust would only allow this program to compile if it
+* was certain that default cannot flow into the return value.
+*
+* To specify whether default can be returned, Rust provide a mechanism called lifetime parameters.
+* Input/output references are treated differently than references within a function body, and Rust
+* uses a different mechanism, the F permission, to check the safety of those references.
+*
+* To see the F permission in another context, say you tried to return a reference to a variable on
+* the stack like this:
+*
+*   fn return_a_string() -> &String {
+*       let s = String::from("Hello world");
+*       let s_ref = &s;
+*       s_ref
+*   }
+* This program is unsafe because the reference &s will be invalidated when return_a_string returns.
+* And Rust will reject this program with a similar missing lifetime specifier error. Now you can
+* understand that error means that s_ref is missing the appropriate flow permissions.
+*
+* Summary
+*
+* References provide the ability to read and write data without consuming ownership of it.
+* References are created with borrows (& and &mut) and used with dereferences (*), often
+* implicitly.
+*
+* However, references can easily be misused. Rust's borrow checker enforces a system of permissions
+* that ensure references are used safely:
+* - All variables can read, own, and (optionally) write their data.
+* - Creating a reference will transfer permissions from the borrowed place to the reference.
+* - Permissions are returned once the reference's lifetime has ended.
+* - Data must outlive all references that point to it.
  */
 
 fn main() {
