@@ -233,6 +233,127 @@
 *                                                       -> *num | No permissions
 *   v.push(4);                                          -> v    | No permissions
 * It's only a problem if you attempt to use num again after mutating v.
+*
+* The Borrow Checker Finds Permission Violations
+*
+* Recall the Pointer Safety Principle: data should not be aliased and mutated. The goal of these
+* permissions is to ensure that data cannot be mutated if it is aliased. Creating a reference to
+* data ("borrowing" it)  causes that data to be temporarily read-only until the reference is no
+* longer in use.
+*
+* Rust uses these permissions in its borrow checker. The borrow checker looks for potentially
+* unsafe operations involving references. Let's return to the unsafe program we saw earlier, where
+* push invalidates a reference.
+*
+*   let mut v: Vec<i32> = vec![1, 2, 3];    -> v    | RWO
+*   let num: &i32 = &v[2];                  -> v    | R
+*                                           -> num  | RO
+*                                           -> *num | R
+*
+*   v.push(4);                              -> v should be readable and writable
+*                                           -> but it's only readable
+*   println!("Third element is {}", *num);
+* Any time a place is used, Rust expects that place to have certain permissions depending on the
+* operation. For example, the borrow &v[2] requires that v is readable. Therefore the R permission
+* is shown between the operation & and the place v. The letter is filled-in because v has the read
+* permission at that line.
+*
+* By contrast, the mutating operation v.push(4) requires that v is readable and writable. Both R
+* and W are shown. However, v does not have write permissions (it is borrowed by num). So the
+* letter W is hollow, indicating that the write permission is expected but v does not have it.
+*
+* The error message explains that v cannot be mutated while the reference num is in use. That's the
+* surface-level reason -- the underlying issue is that num could be invalidated by push. Rust
+* catches that potential violation of memory safety.
+*
+* Mutable References Provide Unique and Non-Owning Access to Data
+*
+* The references we have seen so far are read-only immutable references (also called shared
+* references). Immutable references permit aliasing but disallow mutation. However, it is also
+* useful to temporarily provide mutable access to data without moving it.
+*
+* The mechanism for this is mutable references (also called unique references). Here's a simple
+* example of a mutable reference with teh accompanying permissions changes:
+*
+*   let mut v: Vec<i32> = vec![1, 2, 3];    -> v    | RWO
+*   let num: &mut i32 = &mut v[2];          -> v    | No permissions
+*                                           -> num  | RO
+*                                           -> *num | RW
+*   *num += 1;                              -> requires read and write
+*   println!("Third element is {}", *num);  -> v    | RWO
+*                                           -> num  | No permissions
+*                                           -> *num | No permissions
+*   println!("Vector is now {:?}", v);      -> v    | No permissions
+* A mutable reference is created with the &mut operator. The type of num is written as &mut i32.
+* Compared to immutable references, you can see two important differences in the permissions:
+*   1. When num was an immutable reference, v still had the R permission. Now that num is a mutable
+*      reference, v has lost all permissions while num is in use.
+*   2. When num was an immutable reference, the place *num only had the R permission. Now that num
+*      is a mutable reference, *num has also gained the W permission.
+*
+* The first observation is what makes mutable references safe. Mutable references allow mutation
+* but prevent aliasing. The borrowed place v becomes temporarily unusable, so effectively not an
+* alias.
+*
+* The second observation is what makes mutable references useful. v[2] can be mutated through *num.
+* For example, *num += 1 mutates v[2]. Note that *num has the W permission, but num does not. num
+* refers to the mutable reference itself, e.g., num cannot be assigned to a different mutable
+* reference.
+*
+* Mutable references can also be temporarily "downgraded" to read-only references. For example:
+*
+*   let mut v: Vec<i32> = vec![1, 2, 3];
+*   let num: &mut i32 = &mut v[2];          -> *num     | RW
+*
+*   let num2: &i32 = &*num;                 -> *num     | R
+*                                           -> *num2    | R
+*                                           -> num      | R
+*                                           -> num2     | RO
+*   println!("{} {}", *num, *num2);
+* In this program, the borrow &*num removes the W permission from *num but no the R permission, so
+* println!(...) can read both *num and *num2.
+*
+* Permissions Are Returned At The End of a Reference's Lifetime
+*
+* We said above that a reference changes permissions while it is "in use". The phrase "in use" is
+* describing a reference's lifetime, or the range of code spanning from its birth (where the
+* reference is created) to its death (the last time(s) the reference is used).
+*
+* For example, in this program, the lifetime of y starts with let y = &x, and ends with let z = *y;
+*
+*   let mut x = 1;  -> x    | RWO
+*   let y = &x;     -> x    | R
+*                   -> y    | RO
+*                   -> *y   | R
+*   let z = *y;     -> x    | RWO
+*                   -> y    | No permissions
+*                   -> *y   | No permissions
+*                   -> z    | RO
+*   x += z;         -> x    | No permissions
+*                   -> z    | No permissions
+* The W permission on x is returned to x after the lifetime of y has ended, like we have seen
+* before.
+*
+* In the previous examples, a lifetime has been a contiguous region of code. However, once we
+* introduce control flow, this is not necessarily the case. For example, here is a function that
+* capitalizes the first character in a vector of ASCII characters:
+*
+*   fn ascii_capitalize(v: &mut Vec<char>) {
+*       let c = &v[0];
+*
+*       if c.is_ascii_lowercase() {
+*           let up = c.to_ascii_uppercase();
+*           v[0] = up;
+*       } else {
+*           println!("Already capitalized: {:?}", v);
+*       }
+*   }
+* The variable c has a different lifetime in each brand of the if-statement. In the then-block; c
+* is used in the expression c.to_ascii_uppercase(). Therefore *v does not regain the W permission
+* untile after that line.
+*
+* However, in the else-block, c is not used. *v immediately regains the W permission on entry to
+* the else-block.
  */
 
 fn main() {
