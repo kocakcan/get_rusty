@@ -128,6 +128,111 @@
 *
 * Unlike arrays which have a fixed length, vectors have a variable length by storing their elements
 * in the heap. For example, Vec::push adds an element to the end of a vector, like this:
+*
+*   let mut v: Vec<i32> = vec![1, 2, 3];
+*   let num: &i32 = &v[2];                  -> L1
+*   v.push(4);
+*   println!("Third element is {}", *num);   -> L3
+* The macro vec! creates a vector with the elements between the brackets. The vector v has type
+* Vec<i32>. The syntax <i32> means the elements of the vector have type i32.
+*
+* One important implementation detail is that v allocates a heap array of certain capacity.
+*
+* Notice that the vector has a length (len) of 3 and a capacity (cap) of 3. The vector is at
+* capacity. So when we do a push, the vector has to create a new allocation with larger capacity,
+* copy all the elements over, and deallocate the original heap array.
+*
+* To tie this back to memory safety, let's bring references into the mix. Say we created a
+* reference to a vector's heap data. Then that reference can be invalidated by a push.
+*
+* Initially, v points to an array with 3 elements on the heap. Then num is created as a reference
+* to the third element, as seen at L1. However, the operation v.push(4) resizes v. The resize will
+* deallocate the previous array and allocate a new, bigger array. In the process, num is left
+* pointing to invalid memory. Therefore at L3, *num reads invalid memory, causing undefined
+* behaviour.
+*
+* In more abstract terms, the issue is that the vector v is both aliased (by the reference num) and
+* mutated (by the operation v.push(4)). So to avoid these kinds of issues, Rust follows a basic
+* principle:
+*
+*   Pointer Safety Principle: data should never be aliased and mutated at the same time.
+* Data can be aliased. Data can be mutated. But data cannot be both aliased and mutated. For
+* example, Rust enforces this principle for boxes (owned pointers) by disallowing aliasing.
+* Assigning a box from one variable to another will move ownership, invalidating the previous
+* variable. Owned data can only be accessed through the owner - no aliases.
+*
+* However, because references are non-owning pointers, they need different rules than boxes to
+* ensure the Pointer Safety Principle. By design, references are meant to temporarily create
+* aliases.
+*
+* References Change Permissions on Places
+*
+* The core idea behind the borrow checker is that variables have three kinds of permissions on
+* their data:
+*
+* - Read (R): data can be copied to another location.
+* - Write (W): data can be mutated.
+* - Own (O): data can be moved or dropped.
+* These permissions don't exist at runtime, only within the compiler. They describe how the
+* compiler "thinks" about your program before the program is executed.
+*
+* By default, a variable has read/own permissions (RO) on its data. If a variable is annotated with
+* let mut, then it also has the write permission (W). The key idea is that references can
+* temporarily remove these permissions.
+*
+*   let mut v: Vec<i32> = vec![1, 2, 3];
+*   let num: &i32 = &v[2];
+*   println!("Third element is {}", *num);
+*   v.push(4);
+* 1. After let mut v = (...), the variable v has been initialized. It gains +R+W+O permissions (the
+*    plus sign indicates gain).
+* 2. After let  num = &v[2], the data in v has been borrowed by num.
+*   Three things happen:
+*   - The borrow removes WO permissions from v. v cannot be written or owned, but it can still be
+*   read.
+*   - The variable num has gained RO permissions. num is not writable because it was not marked let
+*   mut.
+*   - The place *num has gained R permission.
+* 3. After println!(...), then num is no longer in use, so v is no longer borrowed.
+*   Therefore:
+*   - v regains its WO permissions
+*   - num and *num have lost all of their permissions
+* 4. After v.push(4), then v is no longer is use, and it loses all of its permissions.
+*
+* Accessing data through a reference is not the same as manipulating the reference itself. For
+* example, say we declared a reference to a number with let mut:
+*
+*   let x = 0;  -> RO permissions
+*   let mut x_ref = &x; -> x        | R (not O permission as it was borrowed)
+*                       -> x_ref    | RWO permissions
+*                       -> *x_ref   | R permission
+* Notice that x_ref has the W permission, while *x_ref does not. That means we can assign a
+* different reference to the x_ref variable (e.g., x_ref = &y), but we cannot mutate the data it
+* points to (e.g., *x_ref += 1).
+*
+* More generally, permissions are defined on places and not just variables. A place is anything you
+* can put on the left-hand side of an assignment. Places include:
+*
+*   - Variables, like a.
+*   - Dereferences of places, like *a.
+*   - Array of accesses of places, like a[0].
+*   - Fields of places, like a.0 for tuples or a.field for structs.
+*   - Any combination of the above, like *((*a)[0].1).
+* Second, why do places lose permissions when the become unused? Because some permissions are
+* mutually exclusive. If you write num = &v[2], then v cannot be mutated or dropped while num is in
+* use. But that doesn't mean it's invalid to use num again. For example, if we add another println!
+* to the above program, then num simply loses its permissions one line later:
+*
+*   let mut v: Vec<i32> = vec![1, 2, 3];                -> v    | RWO
+*   let num: &i32 = &v[2];                              -> v    | R
+*                                                       -> num  | RO
+*                                                       -> *num | R
+*   println!("Third element is {}", *num);
+*   println!("Again, the third element is {}", *num);   -> v    | RWO
+*                                                       -> num  | No permissions
+*                                                       -> *num | No permissions
+*   v.push(4);                                          -> v    | No permissions
+* It's only a problem if you attempt to use num again after mutating v.
  */
 
 fn main() {
