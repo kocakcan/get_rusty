@@ -7,6 +7,7 @@ mod fibonacci;
 mod functions;
 mod ownership;
 mod question;
+mod quiz;
 mod references_and_borrowing;
 mod shadowing;
 mod variables_and_mutability;
