@@ -4,6 +4,7 @@ mod converter;
 mod converter_boxed;
 mod data_types;
 mod fibonacci;
+mod fixing_ownership_errors;
 mod functions;
 mod ownership;
 mod question;
