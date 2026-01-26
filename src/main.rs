@@ -7,6 +7,7 @@ mod fibonacci;
 mod fixing_ownership_errors;
 mod functions;
 mod ownership;
+mod practice;
 mod question;
 mod quiz;
 mod references_and_borrowing;
