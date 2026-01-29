@@ -35,10 +35,19 @@
 //     text
 // }
 
+/* clone() copies every string in the input */
+// fn stringify_name_with_title(name: &Vec<String>) -> String {
+//     let mut name_clone = name.clone();
+//     name_clone.push(String::from("Esq."));
+//     name_clone.join(" ")
+// }
+
+/* slice::join already copies the data in name into the string full
+ * which avoids unnecessary copies */
 fn stringify_name_with_title(name: &Vec<String>) -> String {
-    let mut name_clone = name.clone();
-    name_clone.push(String::from("Esq."));
-    name_clone.join(" ")
+    let mut full = name.join(" ");
+    full.push_str(" Esq.");
+    full
 }
 
 fn main() {

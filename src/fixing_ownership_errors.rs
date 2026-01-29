@@ -127,6 +127,12 @@
 *
 * In general, writing Rust functions is a careful balance of asking for the right level of
 * permissions. For this example, it's most idiomatic to only expect the read permission on name.
+*
+* Fixing an Unsafe Program: Aliasing and Mutating a Data Structure
+*
+* Another unsafe operation is using a reference to heap data that gets deallocated by another
+* alias. For example, here's a function that gets a reference to the largest string in a vector,
+* and then uses it while mutating the vector:
 */
 
 // Missing lifetime specifier
