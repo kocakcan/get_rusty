@@ -21,16 +21,29 @@
 //     println!("{} {}!", *g1, *g2);
 // }
 
-fn main() {
-    let name = String::from("Seyfi");
-    // This is read-only
-    let prefix = " Jr.";
-    let name = concat(name, prefix);
+// fn main() {
+//     let name = String::from("Seyfi");
+//     // This is read-only
+//     let prefix = " Jr.";
+//     let name = concat(name, prefix);
+//
+//     println!("My name is {}", name);
+// }
+//
+// fn concat(mut text: String, prefix: &str) -> String {
+//     text.push_str(prefix);
+//     text
+// }
 
-    println!("My name is {}", name);
+fn stringify_name_with_title(name: &Vec<String>) -> String {
+    let mut name_clone = name.clone();
+    name_clone.push(String::from("Esq."));
+    name_clone.join(" ")
 }
 
-fn concat(mut text: String, prefix: &str) -> String {
-    text.push_str(prefix);
-    text
+fn main() {
+    let name = vec![String::from("Can")];
+    let first = &name[0];
+    stringify_name_with_title(&name);
+    println!("{}", first);
 }
