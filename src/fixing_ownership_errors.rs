@@ -133,6 +133,118 @@
 * Another unsafe operation is using a reference to heap data that gets deallocated by another
 * alias. For example, here's a function that gets a reference to the largest string in a vector,
 * and then uses it while mutating the vector:
+*
+*   fn add_big_strings(dst: &mut Vec<String>, src: &[String]) {
+*       -> *dst         |   RW
+*       -> dst          |   RO
+*       -> *src         |   R
+*       -> (*src)[_]    |   R
+*
+*       let largest: &String =
+*           dst.iter().max_by_key(|s| s.len()).unwrap();    -> iter() and len() requires R
+*       -> *dst         |   R
+*       -> largest      |   RO
+*       -> *largest     |   R
+*
+*       for s in src {
+*       -> src          |   No permissions
+*       -> *src         |   No permissions
+*       -> (*src)[_]    |   No permissions
+*       -> s            |   RO
+*       -> *s           |   R
+*
+*           if s.len() > largest.len() {
+*               dst.push(s.clone());    -> push() requires RW
+*                                       -> clone() requires R
+*           }
+*       }
+*   }
+* This program is rejected by the borrow checker because let target = .. removes the W permission
+* on dst. However, dst.push(..) requires the W permission. Again, we should ask: why is this
+* program unsafe? Because dst.push(..) could deallocate the contents of dst, invalidating the
+* reference largest.
+*
+* To fix this program, the key insight is that we need to shorten the lifetime of largest to not
+* overlap with dst.push(..). One possibility is to clone largest:
+*
+*   fn add_big_strings(dst: &mut Vec<String>, src: &[String]) {
+*       let largest: String = dst.iter().max_by_key(|s| s.len()).unwrap().clone();
+*       for s in src {
+*           dst.push(s.clone());
+*       }
+*   }
+* However, this may cause a performance hit for allocating and copying the string data.
+*
+* Another possibility is to perform all the length comparisons first, and then mutate dst
+* afterwards:
+*
+*   fn add_big_strings(dst: &mut Vec<String>, src: &[String]) {
+*       let largest: &String = dst.iter().max_by_key(|s| s.len()).unwrap();
+*       let to_add: Vec<String> =
+*           src.iter().filter(|s| s.len() > largest.len()).cloned().collect();
+*       dst.extend(to_add);
+*   }
+* However, this also causes a performance hit for allocating the vector to_add.
+*
+* A final possibility is to copy out the length of largest, since we don't actually need the
+* contents of largest, just its length. This solution is arguably the most idiomatic and the most
+* performant:
+*
+*   fn add_big_strings(dst: &mut Vec<String>, src: &[String]) {
+*       let largest_len: usize = dst.iter().max_by_key(|s| s.len()).unwrap().len();
+*       for s in src {
+*           if s.len() > largest_len {
+*               dst.push(s.clone());
+*           }
+*       }
+*   }
+* These solutions all share in common the key idea: shortening the lifetime of borrows on dst to
+* not overlap with a mutation to dst.
+*
+* Fixing an Unsafe Program: Copying vs. Moving Out of a Collection
+*
+* A common confusion for Rust learners happens when copying data out of a collection, like a
+* vector:
+*
+*   let v: Vec<i32> = vec![0, 1, 2];
+*
+*   -> v | RO
+*
+*   let n_ref: &i32 = &v[0];
+*
+*   -> n_ref    | RO
+*   -> *n_ref   | R
+*   -> v        | No permissions
+*
+*   let n: i32 = *n_ref;    -> this operation requires R permission
+*
+*   -> n_ref    | No permissions
+*   -> *n_ref   | No permissions
+* The dereference operation *n_ref expects just the R permission, which the path *n_ref has. But
+* what happens if we change the type of elements in the vector from i32 to String? Then it turns
+* out we no longer have the necessary permissions:
+*
+*   let v: Vec<String> =
+*       vec![String::from("Hello world")];
+*
+*   -> v        | RO
+*
+*   let s_ref: &String = &v[0];             -> requires R permission (referencing)
+*
+*   -> s_ref    | RO
+*   -> *s_ref   | R
+*   -> v        | No permissions
+*
+*   let s: String = *s_ref;                 -> requires both R and O permissions 😱
+* The first program will compile, but the second program will not compile. Rust gives the following
+* error message: cannot move out of '*s_ref' which is behind a shared reference.
+*
+* The issue is that the vector v owns the string "Hello world". When we dereference s_ref, that
+* tries to take ownership of the string from the vector. But references are non-owning pointers --
+* we can't take ownership through a reference. Therefore Rust complains that we "cannot move out of
+* [...] s shared reference".
+*
+* But why is this unsafe?
 */
 
 // Missing lifetime specifier
@@ -163,14 +275,25 @@
 //     output.replace_range(.., "Hello world");
 // }
 
-fn stringify_name_with_title(name: &mut Vec<String>) -> String {
-    name.push(String::from("Esq."));
-    let full = name.join(" ");
-    full
-}
+// fn stringify_name_with_title(name: &mut Vec<String>) -> String {
+//     name.push(String::from("Esq."));
+//     let full = name.join(" ");
+//     full
+// }
 
-fn main() {
-    let mut names: Vec<String> = vec![String::from("Ferris"), String::from("Jr.")];
-    let stringified_name = stringify_name_with_title(&mut names);
-    println!("My name is {stringified_name}");
-}
+// fn main() {
+//     let mut names: Vec<String> = vec![String::from("Ferris"), String::from("Jr.")];
+//     let stringified_name = stringify_name_with_title(&mut names);
+//     println!("My name is {stringified_name}");
+// }
+
+/* largest removes W permission from dst and then we're trying to perform push() on dst
+ * which dst doesn't have the permission for it. */
+// fn add_big_strings(dst: &mut Vec<String>, src: &[String]) {
+//     let largest: &String = dst.iter().max_by_key(|s| s.len()).unwrap();
+//     for s in src {
+//         if s.len() > largest.len() {
+//             dst.push(s.clone());
+//         }
+//     }
+// }
