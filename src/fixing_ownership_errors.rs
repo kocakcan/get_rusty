@@ -236,6 +236,8 @@
 *   -> v        | No permissions
 *
 *   let s: String = *s_ref;                 -> requires both R and O permissions 😱
+*   drop(s);                                -> These drops are normally implicit
+*   drop(v);
 * The first program will compile, but the second program will not compile. Rust gives the following
 * error message: cannot move out of '*s_ref' which is behind a shared reference.
 *
@@ -244,7 +246,54 @@
 * we can't take ownership through a reference. Therefore Rust complains that we "cannot move out of
 * [...] s shared reference".
 *
-* But why is this unsafe?
+* But why is this unsafe? What happens here is a double-free. After executing let s = *s_ref, both
+* v and s think they own "Hello world". After s is dropped, "Hello world" is deallocated. Then v is
+* dropped, and undefined behaviour happens when the string is freed a second time.
+*
+* Note: after executing s = *s_ref, we don't even have to use v or s to cause undefined behaviour
+* through the double-free. As soon as we move the string out from s_ref, undefined behaviour will
+* happen once the elements are dropped.
+*
+* However, this undefined behaviour does not happen when the vector contains i32 elements. This
+* difference is that copying a String copies a pointer to heap data. Copying an i32 does not. In
+* technical terms, Rust says that the type i32 implements the Copy trait, while String does not
+* implement Copy.
+*
+* In sum, if a value does not own heap data, then it can be copied without a move. For example:
+* - An i32 does not own heap data, so it can be copied without a move.
+* - A String does own heap data, so it can not be copied without a move.
+* - An &String does not own heap data, so it can be copied without a move.
+*
+* Note: One exception to this rule is mutable references. For example, &mut i32 is not a copyable
+* type. So if you do something like:
+*
+*   let mut n = 0;
+*   let a = &mut n;
+*   let b = a;
+* Then a cannot be used after being assigned to b. That prevents two mutable references to the same
+* data from being used at the same time.
+*
+* So if we have a vector of non-Copy types like String, then how do we safely get access to an
+* element of the vector? Here's a few different ways to safely do so. First, you can avoid taking
+* ownership of the string and just use an immutable reference:
+*
+*   let v: Vec<String> = vec![String::from("Hello world")];
+*   let s_ref: &String = &v[0];
+*   println!("{s_ref}");
+* Second, you can clone the data if you want to get ownership of the string while leaving the
+* vector alone:
+*
+*   let v: Vec<String> = vec![String::from("Hello world")];
+*   let mut s: String = v[0].clone();
+*   s.push('!');
+*   println!("{s}");
+* Finally, you can use a method like Vec::remove to move the string out of the vector:
+*
+*   let mut v: Vec<String> = vec![String::from("Hello world")];
+*   let mut s: String = v.remove(0);
+*   s.push('!');
+*   println!("{s}");
+*   assert!(v.len() == 0);
 */
 
 // Missing lifetime specifier
