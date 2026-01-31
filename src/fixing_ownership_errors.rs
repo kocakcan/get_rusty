@@ -294,6 +294,106 @@
 *   s.push('!');
 *   println!("{s}");
 *   assert!(v.len() == 0);
+*
+* Fixing a Safe Program: Mutating Different Tuple Fields
+*
+* The above examples are where a program is unsafe. Rust may also reject safe programs. One common
+* issue is that Rust tries to track permissions at a fine-grained level. However, Rust may conflate
+* two different places as the same place.
+*
+* This program shows how you can borrow one field of a tuple, and write to a different field of the
+* same tuple:
+*
+*   let mut name = {
+*       String::from("Ferris"),
+*       String::from("Rustacean")
+*   };
+*
+*   -> name     | RWO
+*   -> name.0   | RWO
+*   -> name.1   | RWO
+*
+*   let first = &name.0;        -> & requires R permission
+*
+*   -> name     | R
+*   -> name.0   | R
+*   -> first    | RO
+*   -> *first   | R
+*
+*   name.1.push_str(", Esq.");  -> push_str requires RW
+*   println!("{first} {}", name.1);
+*   -> name     | No permissions
+*   -> name.0   | No permissions
+*   -> name.1   | No permissions
+*   -> first    | No permissions
+*   -> *first   | No permissions
+* The statement let first = &name.0 borrows name.0. This borrow removes WO permissions from name.0.
+* It also removes WO permissions from name. (For example, one could not pass name to a function
+* that takes as input value of type (String, String). But name.1 still retains the W permission, so
+* doing name.1.push_str(...) is a valid operation.
+*
+* However, Rust can lose track of exactly which places are borrowed. For example, let's say we
+* refactor the expression &name.0 into a function get_first. Notice how after calling
+* get_first(&name), Rust now removes the W permission on name.1:
+*
+*   fn get_first(name: &(String, String)) -> &String {
+*       &name.0
+*   }
+*
+*   fn main() {
+*       let mut name = {
+*           String::from("Ferris"),
+*           String::from("Rustacean")
+*       };
+*
+*       let first = get_first(&name);
+*       name.1.push_str(", Esq.");
+*       println!("{first} {}", name.1);
+*   }
+* Now we can't do name.1.push_str(..)! Rust will return this error: cannot borrow 'name.1' as
+* mutable because it is also borrowed as immutable.
+*
+* That's strange since the program was safe before we edited it. That edit we made doesn't
+* meaningfully change the runtime behaviour. So why does it matter that we put &name.0 into a
+* function?
+*
+* The problem is that Rust doesn't look at the implementation of get_first when deciding what
+* get_first(&name) should borrow. Rust only looks at the type signature, which just says "some
+* String in the input gets borrowed". Rust conservatively decides then both name.0 and name.1 get
+* borrowed, and eliminates write and own permissions on both.
+*
+* Remember, the key idea is that the program above is safe. It has no undefined behaviour!
+*
+* Fixing a Safe Program: Mutating Different Array Elements
+*
+* A similar kind of problem arises when we borrow elements of an array. For example, observe what
+* places are borrowed when we take a mutable reference to an array:
+*
+*   let mut a = [0, 1, 2, 3];
+*
+*   -> a    | RWO
+*   -> a[_] | RW
+*
+*   let x = &mut a[1];
+*
+*   -> a[_] | No permissions
+*   -> a    | No permissions
+*   -> x    | RO
+*   -> *x   | RW
+*
+*   *x += 1;    -> requires RW
+*
+*   -> a    | RW
+*   -> x    | No permissions
+*   -> *x   | No permissions
+*
+*   println!("{a:?}");
+*
+*   -> a    | No permissions
+*   -? a[_] | No permissions
+* Rust's borrow checker does not contain different places for a[0], a[1], and so on. It uses a
+* single place a[_] that represents all indexes of a. Rust does this because it cannot always
+* determine the value of an index.
 */
 
 // Missing lifetime specifier
