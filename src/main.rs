@@ -12,6 +12,7 @@ mod question;
 mod quiz;
 mod references_and_borrowing;
 mod shadowing;
+mod the_slice_type;
 mod variables_and_mutability;
 
 fn main() {
