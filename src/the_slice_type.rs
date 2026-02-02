@@ -53,5 +53,85 @@
 * We now have a way to find out the index of the end of the first word in the string, but there's a
 * problem. We're returning a usize on its own, but it's only a meaningful number in the context of
 * the &String. In other words, because it's a separate value from the String, there's no guarantee
-* that it will still be valid in the future.
+* that it will still be valid in the future. Consider the following program:
+*
+*   fn first_word(s: &String) -> usize {
+*       -> s            | RO
+*       -> *s           | R
+*
+*       let bytes = s.as_bytes();
+*
+*       -> bytes        | RO
+*       -> *bytes       | R
+*       -> (*bytes)[_]  | R
+*
+*       for (i, &item) in bytes.iter().enumerate() {
+*
+*       -> bytes        | No permissions
+*       -> *bytes       | No permissions
+*       -> (*bytes)[_]  | No permissions
+*       -> i            | RO
+*       -> item         | RO
+*
+*           if item == b' ' {
+*
+*       -> s            | No permissions
+*       -> *s           | No permissions
+*       -> item         | No permissions
+*               return i;
+*
+*       -> i            | No permissions (goes out of scope)
+*           }
+*
+*       -> i            | No permissions
+*       -> item         | No permissions
+*       }
+*       s.len()
+*   }
+*
+*   fn main() {
+*       let mut s = String::from("hello world");
+*
+*       s               | RWO
+*
+*       let word = first_word(&s);  -> referencing requires R
+*                                   -> would need W as well if it was &mut reference
+*       s.clear();                  -> clear() requires both R and W
+*   }
+* This program compiles without any errors, as s retains write permissions after calling
+* first_word. Because word isn't connected to the state of s at all, word still contains the value
+* 5. We could use that value 5 with the variable s to try to extract the first word out, but this
+* would be a bug because the contents of s have changed since we saved 5 in word.
+*
+* Having to worry about the index in word getting out of sync with the data in s is tedious and
+* error prone! Managing these indices is even more brittle if we write a second_word function. Its
+* signature would have to look like this:
+*
+*   fn second_word(s: &String) -> (usize, usize) {
+* Now we're tracking a starting and an ending index, and we have even more values that were
+* calculate from data in a particular state but aren't tied to that state at all. We have three
+* unrelated variables floating around that need to be kept in sync.
+*
+* Luckily, Rust has a solution to this problem: string slices.
+*
+* String Slices
+*
+* A string slice is a reference to part of a String, and it looks like this:
 */
+
+fn first_word(s: &String) -> usize {
+    let s = s.as_bytes();
+
+    for (i, &item) in s.iter().enumerate() {
+        if item == b' ' {
+            return i;
+        }
+    }
+    s.len()
+}
+
+fn main() {
+    let mut s = String::from("hello world");
+    let word = first_word(&s);
+    s.clear();
+}
