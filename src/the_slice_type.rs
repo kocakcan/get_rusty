@@ -92,7 +92,7 @@
 *   fn main() {
 *       let mut s = String::from("hello world");
 *
-*       s               | RWO
+*       -> s               | RWO
 *
 *       let word = first_word(&s);  -> referencing requires R
 *                                   -> would need W as well if it was &mut reference
@@ -117,21 +117,67 @@
 * String Slices
 *
 * A string slice is a reference to part of a String, and it looks like this:
+*
+*   let s = String::from("hello world");
+*
+*   let hello: &str = &s[0..5];
+*   let world: &str = &s[6..11];
+*   let s2: &String = &s;
+* Rather than a reference to the entire String (like s2), hello is a reference to a portion of the
+* String, specified in the extra [0..5] bit. We create slices using a range within brackets by
+* specifying [starting_index..ending_index], where starting_index is the first position in the
+* slice and ending_index is one more than the last position in the slice.
+*
+* Slices are special kinds of references because they are "fat" pointers, or pointers with
+* metadata. Here, the metadata is the length of the slice. The variables hello and world have both
+* a ptr and a len field, which together define the underlined regions of the string on the heap.
+*
+* Because slices are references, they also change the permissions on referenced data. For example,
+* observe below that when hello is created as a slice of s, then s loses write and own permissions:
+*
+*   fn main() {
+*       let mut s = String::from("hello");
+*
+*   -> s        | RWO
+*
+*       let hello: &str = &s[0..5];
+*
+*   -> s        | R
+*   -> hello    | RO
+*   -> *hello   | R
+*
+*       println!("{hello}");    -> requires R
+*
+*   -> s        | RWO
+*   -> hello    | No permissions (goes out of scope)
+*   -> *hello   | No permissions (goes out of scope)
+*
+*   s.push_str(" world");       -> requires RW
+*
+*   -> s        | No permissions (goes out of scope)
+*   }
 */
 
-fn first_word(s: &String) -> usize {
-    let s = s.as_bytes();
+// fn first_word(s: &String) -> usize {
+//     let s = s.as_bytes();
+//
+//     for (i, &item) in s.iter().enumerate() {
+//         if item == b' ' {
+//             return i;
+//         }
+//     }
+//     s.len()
+// }
+//
+// fn main() {
+//     let mut s = String::from("hello world");
+//     let word = first_word(&s);
+//     s.clear();
+// }
 
-    for (i, &item) in s.iter().enumerate() {
-        if item == b' ' {
-            return i;
-        }
-    }
-    s.len()
-}
-
-fn main() {
-    let mut s = String::from("hello world");
-    let word = first_word(&s);
-    s.clear();
-}
+// fn main() {
+//     let mut s = String::from("hello");
+//     let hello: &str = &s[0..5];
+//     println!("{hello}");
+//     s.push_str(" world");
+// }

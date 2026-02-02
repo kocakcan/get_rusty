@@ -86,3 +86,21 @@
 //     let mut name = *name;
 //     name.push_str(", Ph.D.");
 // }
+
+fn first_word(s: &String) -> &str {
+    let b = s.as_bytes();
+
+    for (i, &item) in b.iter().enumerate() {
+        if item == b' ' {
+            return &s[0..i];
+        }
+    }
+    &s
+}
+
+fn main() {
+    let mut input = String::from("Knight Artorias");
+    let result = first_word(&input);
+    println!("{result}");
+    input.clear();
+}
