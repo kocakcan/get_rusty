@@ -87,20 +87,30 @@
 //     name.push_str(", Ph.D.");
 // }
 
-fn first_word(s: &String) -> &str {
-    let b = s.as_bytes();
+// fn first_word(s: &str) -> &str {
+//     let b = s.as_bytes();
+//
+//     for (i, &item) in b.iter().enumerate() {
+//         if item == b' ' {
+//             return &s[0..i];
+//         }
+//     }
+//     &s[..]
+// }
+//
+// fn main() {
+//     let input = String::from("Knight Artorias");
+//     let result = first_word(&input);
+//     println!("{result}");
+// }
 
-    for (i, &item) in b.iter().enumerate() {
-        if item == b' ' {
-            return &s[0..i];
-        }
-    }
-    &s
-}
-
+/* word is an immutable reference meaning it doesn't have W permission and since it's used again
+ * after calling .clear() we know that it won't be dropped until that line. clear() requires W
+ * permission which it doesn't have right now. We would end up with both mutable and immutable
+ * reference if this was compiled. */
 fn main() {
-    let mut input = String::from("Knight Artorias");
-    let result = first_word(&input);
-    println!("{result}");
-    input.clear();
+    let mut s = String::from("hello world");
+    let word = first_word(&s);
+    s.clear();
+    println!("the first word is: {}", word);
 }
