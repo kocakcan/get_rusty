@@ -83,4 +83,101 @@
 *
 *       *x += 5;
 *  }
+* - Why does a_box_stack_ref point to the stack, while a_box_heap_ref point to the heap?
+* + a_box_stack_ref is a reference and it is pointing to the a_box, which is a local variable that
+* points to the value 2 on the heap. On the other hand; a_box_heap_ref points to &*a_box. As & and
+* * have the same precedence they associate from right to left, meaning we should dereference the
+* a_box first which would give us 2 and then it would be a reference to 2 which is on the heap.
+* - Why is the value 2 no longer on the heap at L2? 2 is owned by the a_box variable and when
+* inner() function call ends, the local variables are deallocated. So, when inner returns to the
+* main we 2 (on the heap) and all the local variables to that function are deallocated.
+* + Why does a_num have the value 5 at L2? a_num is passed in to inner as a mutable reference and
+* in the function body it's modified. Since x is only a reference it doesn't own the actual value,
+* so when the inner() function ends the reference gets deallocated but the ownership would be
+* transferred to a_num which is the original owner.
+*
+* Slices are a special kind of reference that refer to a contiguous sequence of data in memory.
+*
+*   fn main() {
+*       let s = String::from("abcdefg");
+*       let s_slice = &s[2..5];
+*   }
+*
+* Ownership at Compile-time
+*
+* Rust tracks R (read), W (write), and O (own) permissions on each variable. Rust requires that a
+* variable has appropriate permissions to perform a given operation. As a basic example, if a
+* variable is not declared as let mut, then it is missing the W permission and cannot be mutated:
+*
+*   fn main() {
+*       let n = 0;
+*
+*       -> n        | RO
+*
+*       n += 1;     | += requires RW and n doesn't have W
+*   }
+* A variable's permissions can be changed if it is moved or borrowed. A move of a variable with a
+* non-copyable type (like Box<T> or String) requires the RO permissions, and the move eliminates
+* all permissions on the variable. That rule prevents the use of moved variables:
+*
+*   fn main() {
+*       let s = String::from("Hello world");
+*
+*       -> s        | RO
+*
+*       consume_a_string(s);
+*
+*       -> s        | No permissions as it was moved by consume_a_string()
+*
+*       println!("{s}");    -> println! requires R which s doesn't have
+*   }
+*
+*   fn consume_a_string(_s: String) {
+*       // om nom nom
+*   }
+* Borrowing a variable (creating a reference to it) temporarily removes some of the variable's
+* permissions. An immutable borrow creates an immutable reference, and also disables the borrowed
+* data from being mutated or moved. For example, printing an immutable reference is ok:
+*
+*   let mut s = String::from("Hello");
+*
+*   -> s        | RWO
+*
+*   let s_ref = &s;
+*
+*   -> s        | R
+*   -> s_ref    | RO
+*   -> *s_ref   | R
+*
+*   println!("{s_ref}");
+*
+*   -> s        | RWO
+*   -> s_ref    | No permissions (goes out of scope)
+*   -> *s_ref   | No permissions (goes out of scope)
+*
+*   println!("{s}");    -> again println! requires R which s has
+*
+*   -> s        | No permissions (goes out of scope)
+* But mutating an immutable reference is not ok:
+*
+*   let mut s = String::from("Hello");
+*
+*   -> s        | RWO
+*
+*   let s_ref = &s;     -> referencing/borrowing requires R
+*
+*   -> s_ref    | RO
+*   -> *s_ref   | R
+*   -> s        | R
+*
+*   s_ref.push_str(" world");   -> push_str() requires RW
+*
+*   -> s        | No permissions
+*   -> s_ref    | RO
+*   -> *s_ref   | R
+*
+*   println!("{s_ref}");
+*
+*   -> s_ref    | No permissions (goes out of scope)
+*   -> *s_ref   | No permissions (goes out of scope)
  */
