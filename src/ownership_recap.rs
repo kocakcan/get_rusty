@@ -57,4 +57,30 @@
  * Rust makes working with memory and pointers concepts explicit, which is fucking awesome. This
  * has the dual benefit of (1) improving runtime performance by avoiding garbage collection, and
  * (2) improving predictability by preventing accidental "leaks" of data.
+ *
+ * The Concept of Ownership
+ *
+ * Ownership at Runtime
+ *
+ * - Rust allocates local variables in stack frames, which are allocated when a function is called
+ * and deallocated when the call ends.
+ * - Local variables can hold either data (like numbers, booleans, tuples, etc.) or pointers.
+ * - Pointers can be created either through boxes (pointers owning data on the heap) or references
+ * (non-owning pointers)
+ *
+ *  fn main() {
+*       let mut a_num = 0;
+*       inner(&mut a_num);
+*  }
+*
+*  fn inner(x: &mut i32) {
+*       let another_num = 1;
+*       let a_stack_ref = &another_num;
+*
+*       let a_box = Box::new(2);
+*       let a_box_stack_ref = &a_box;
+*       let a_box_heap_ref = &*a_box;
+*
+*       *x += 5;
+*  }
  */
