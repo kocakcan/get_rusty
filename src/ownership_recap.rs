@@ -226,4 +226,54 @@
 *   let s2 = *s_ref;            -> this is moving not borrowing
 *                               -> so it requires O as well along with R
 *   println!("{s}");
+* A mutable borrow creates a mutable reference, which disables the borrowed data from being read,
+* written, or moved. For example, mutating a mutable reference is ok:
+*
+*   let mut s = String::from("Hello");
+*
+*   -> s        | RWO
+*
+*   let s_ref = &mut s;
+*
+*   -> s        | No permissions (loses all permissions due to mutable reference)
+*   -> s_ref    | RWO
+*   -> *s_ref   | RW
+*
+*   println!("{s}");            -> requires R which s doesn't have
+*   s_ref.push_str(" world")    -> ok since s_ref still has W permission
+*
+*   -> s_ref    | No permissions (goes out of scope)
+*   -> *s_ref   | No permissions (goes out of scope)
+* Connecting Ownership between Compile-time and Runtime
+*
+* Rust's permissions are designed to prevent undefined behaviour. For example, one kind of
+* undefined behaviour is a use-after-free where freed memory is read or written. Immutable borrows
+* remove the W permission to avoid use-after-free, like in this case:
+*
+*   let mut v = vec![1, 2, 3];
+*   let n = &v[0];
+*   v.push(4);
+*   println!("{n}");
+* Here, n borrows the v, which in turn strips v of its WO permissions. On the last line we are
+* printing the value of n so we know that n will be in the scope until that line. We can't perform
+* push() operation as at that place v wouldn't have its W permission. Had this been compiled, we
+* would've read the freed memory location as n would be pointing to an invalid memory location
+* after push() has been performed.
+*
+* Another kind of undefined behaviour is a double-free where memory is freed twice. Dereferences of
+* references to non-copyable data do not have the O permission to avoid double-frees, like in this
+* case:
+*
+*   let v = vec![1, 2, 3];
+*   let v_ref: &Vec<i32> = &v;
+*   let v2 = *v_ref;
+*   drop(v2);
+*   drop(v);
+* When v2 goes out scope, its heap data will be deallocated, meaning v would be pointing to an
+* invalid memory location and then v is also dropped, causing freed memory location to be freed
+* once again.
+*
+* The Rest of Ownership
+*
+* structs, enums, and traits will have specific interactions with ownership.
  */
