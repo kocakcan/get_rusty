@@ -180,4 +180,50 @@
 *
 *   -> s_ref    | No permissions (goes out of scope)
 *   -> *s_ref   | No permissions (goes out of scope)
+* But mutating an immutable reference is not ok:
+*
+*   let mut s = String::from("Hello");
+*
+*   -> s        | RWO
+*
+*   let s_ref = &s;             -> referencing/borrowing requires R
+*
+*   -> s        | R
+*   -> s_ref    | RO
+*   -> *s_ref   | R
+*
+*   s_ref.push_str(" world");   -> push_str() requires RW
+*                               -> s_ref doesn't have W
+*   println!("{s}");            -> this is ok because s would regain
+*                               -> all its permissions
+* And mutating the immutable borrowed data is not ok:
+*
+*   let mut s = String::from("Hello");
+*
+*   -> s        | RWO
+*
+*   let s_ref = &s;             -> referencing/borrowing requires R
+*
+*   -> s        | R
+*   -> s_ref    | RO
+*   -> *s_ref   | R
+*
+*   s.push_str(" world");       -> push_str() requires RW
+*                               -> a s doesn't have it since s_ref is still in scope
+*   println!("{s_ref}");        -> if it wasn't for this line, the previous line would be ok
+* And moving data out of the reference is not ok:
+*
+*   let mut s = String::from("Hello");
+*
+*   -> s        | RWO
+*
+*   let s_ref = &s;
+*
+*   -> s        | R
+*   -> s_ref    | RO
+*   -> *s_ref   | R
+*
+*   let s2 = *s_ref;            -> this is moving not borrowing
+*                               -> so it requires O as well along with R
+*   println!("{s}");
  */
