@@ -129,6 +129,15 @@ struct User {
     sign_in_count: u64,
 }
 
+fn build_user(username: String, email: String) -> User {
+    User {
+        username,
+        email,
+        active: true,
+        sign_in_count: 1,
+    }
+}
+
 fn main() {
     let user1 = User {
         active: true,
@@ -137,8 +146,23 @@ fn main() {
         email: String::from("someone@example.com"),
     };
 
-    println!(
-        "{} has logged into the application {} times so far",
-        user1.username, user1.sign_in_count
+    let user2 = User {
+        active: false,
+        sign_in_count: 2,
+        ..user1
+    };
+
+    let user3 = build_user(
+        String::from("clwy"),
+        String::from("komiksivasli@hotmail.com"),
     );
+
+    let users = vec![user2, user3];
+
+    for user in users {
+        println!(
+            "{} has logged into the application {} times so far",
+            user.username, user.sign_in_count
+        );
+    }
 }
