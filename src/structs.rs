@@ -18,4 +18,127 @@
 *       email: String,
 *       sign_in_count: u64,
 *   }
+* To use a struct after we've defined it, we create an instance of that struct by specifying
+* concrete values for each of the fields. We create an instance by stating the name of the struct
+* and then add curly brackets containing key: value pairs, where the keys are the names of the
+* fields and the values are the data we want to store in those fields. We don't have to specify the
+* fields in the same order in which we declared them in the struct. In other words, the struct
+* definition is like a general template for the type, and instances fill in that template with
+* particular data to create values of the type.
+*
+*   fn main() {
+*       let use1 = User {
+*           email: String::from("someone@example.com"),
+*           username: String::from("someusername123"),
+*           active: true,
+*           sign_in_count: 1,
+*       };  -> L1
+*   }
+* To get a specific value from a struct, we use dot notation. For example, to access this user's
+* email address, we use user1.email. If the instance is mutable, we can change a value by using the
+* dot notation and assigning into a particular field.
+*
+*   fn main() {
+*       let mut use1 = User {
+*           email: String::from("someone@example.com"),
+*           username: String::from("someusername123"),
+*           active: true,
+*           sign_in_count: 1,
+*       };  -> L1
+*       user1.email = String::from("anotheremail@example.com"); -> L2
+*   }
+* Note that the entire instance must be mutable; Rust doesn't allow us to mark only certain fields
+* as mutable. As with any expression, we can construct a new instance of the struct as the last
+* expression in the function body to implicitly return that new instance.
+*
+*  fn build_user(email: String, username: String) -> User {
+*   User {
+*       active: true,
+*       username: username,
+*       email: email,
+*       sign_in_count: 1,
+*   }
+*  }
+* It makes sense to name the function parameters with the same name as the struct fields, but
+* having to repeat the email and username field names and variables is a bit tedious. If the struct
+* had more fields, repeating each name would get even more annoying.
+*
+* Using the Field Init Shorthand
+*
+* Because the parameter names and the struct field names are exactly the same above we can use the
+* field init shorthand syntax to rewrite build_user so it behaves exactly the same but doesn't have
+* the repetition of username and email as shown below:
+*
+*   fn build_user(email: String, username: String) -> User {
+*       User {
+*           active: true,
+*           username,
+*           email,
+*           sign_in_count: 1,
+*       }
+*   }
+* Here, we're creating a new instance of the User struct, which has a field named email. We want to
+* set the email field's value to the value in the email parameter of the build_user function.
+* Because the email field and the email parameter have the same name, we only need to write email
+* rather than email: email.
+*
+* Creating Instances from Other Instances with Struct Update Syntax
+*
+* It's often useful to create a new instance of a struct that includes most of the values from
+* another instance of the same type, but changes some. You can do this using struct update syntax.
+*
+*   fn main() {
+*       // --snip--
+*
+*       let user2 = User {
+*           active: user1.active,
+*           username: user1.username,
+*           email: String::from("another@example.com"),
+*           sign_in_count: user1.sign_in_count,
+*       };  -> L1
+*   }
+* Using struct update syntax, we can achieve the same effect with less code, as shown below. The
+* syntax .. specifies that the remaining fields not explicitly set should have the same values as
+* the fields in the given instance.
+*
+*   fn main() {
+*       // --snip--
+*
+*       let user2 = User {
+*           email: String::from("another@example.com"),
+*           ..user1
+*       }
+*   }
+* The code above also creates an instance in user2 that has a different value for email but has the
+* same values for the username, active, and sign_in_count fields from user1. The ..user1 must come
+* last to specify that any remaining fields should get their values from the corresponding fields
+* in user1, but we can choose to specify values for as many fields as we want in any order,
+* regardless of the order of the fields in the struct's definition.
+*
+* Note that the struct update syntax uses = like an assignment; this is because it moves the data.
+* In this example, after creating user2, user1 is partially invalidated because the String in the
+* username field of user1 was moved into user2. If we had given user2 new String values for both
+* email and username, and thus only user the active and sign_in_count values from user1, then user1
+* would still be fully valid after creating user2. The types of active and sign_in_count are types
+* that implement the Copy trait, so they can be copied.
 */
+struct User {
+    active: bool,
+    username: String,
+    email: String,
+    sign_in_count: u64,
+}
+
+fn main() {
+    let user1 = User {
+        active: true,
+        username: String::from("someusername123"),
+        sign_in_count: 1,
+        email: String::from("someone@example.com"),
+    };
+
+    println!(
+        "{} has logged into the application {} times so far",
+        user1.username, user1.sign_in_count
+    );
+}
