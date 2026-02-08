@@ -121,6 +121,34 @@
 * email and username, and thus only user the active and sign_in_count values from user1, then user1
 * would still be fully valid after creating user2. The types of active and sign_in_count are types
 * that implement the Copy trait, so they can be copied.
+*
+* Using Tuple Structs Without Named Fields to Create Different Types
+*
+* Rust also supports structs that look similar to tuples, called tuple structs. Tuple structs have
+* the added meaning the struct name provides but don't have names associated with their fields;
+* rather, they just have the types of the fields. Tuple structs are useful when you want to give
+* the whole tuple a name and make the tuple a different type from other tuples, and when naming
+* each field as in a regular struct would be verbose or redundant.
+*
+* To define a tuple struct, start with the struct keyword and the struct name followed by the types
+* in the tuple. For example, here we define and use two tuple structs named Color and Point:
+*
+*   struct Color(i32, i32, i32);
+*   struct Point(i32, i32, i32);
+*
+*   fn main() {
+*       let black = Color(0, 0, 0);
+*       let origin = Point(0, 0, 0);
+*   }
+* Note that the black and origin values are different types because they're instanes of different
+* tuple structs. Each struct you define is its own type, even though the fields within the struct
+* might have the same types. For example, a function that takes a parameter of type Color cannot
+* take a Point as an argument, even though both types are made up of three i32 values. Otherwise,
+* tuple struct instances are similar to tuples in that you can destructure them into their
+* individual pieces, and you can use . followed by the index to access an individual value. Unlike
+* tuples, tuple structs require you to name the type of the struct when you destructure them. For
+* example, we would write let Point(x, y, z) = origin; to destructure the values in the origin
+* point into variables name x, y, and z.
 */
 struct User {
     active: bool,
@@ -128,6 +156,9 @@ struct User {
     email: String,
     sign_in_count: u64,
 }
+
+struct Color(i32, i32, i32);
+struct Point(i32, i32, i32);
 
 fn build_user(username: String, email: String) -> User {
     User {
@@ -165,4 +196,10 @@ fn main() {
             user.username, user.sign_in_count
         );
     }
+
+    let black = Color(0, 0, 0);
+    let origin = Point(0, 0, 0);
+
+    let Point(x, y, z) = origin;
+    println!("({}, {}, {})", x, y, z);
 }
