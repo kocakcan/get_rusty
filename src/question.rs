@@ -7,7 +7,7 @@ fn main() {
     // y points to a reference that is on the heap pointing to x
     // If we dereference y once, we would access y
     // If we dereference y we would access x
-    // Finally if we derefence x access the 0.
+    // Finally if we derefence x we can access the 0.
 
     // Both work as Rust implicitly inserts references and dereferences
     println!("x: {}", ***y);

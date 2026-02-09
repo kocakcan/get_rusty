@@ -108,9 +108,23 @@
  * after calling .clear() we know that it won't be dropped until that line. clear() requires W
  * permission which it doesn't have right now. We would end up with both mutable and immutable
  * reference if this was compiled. */
+// fn main() {
+//     let mut s = String::from("hello world");
+//     let word = first_word(&s);
+//     s.clear();
+//     println!("the first word is: {}", word);
+// }
+
+struct Point {
+    x: i32,
+    y: i32,
+}
+
 fn main() {
-    let mut s = String::from("hello world");
-    let word = first_word(&s);
-    s.clear();
-    println!("the first word is: {}", word);
+    let mut p = Point { x: 5, y: 6 };
+    let x = &mut p.x;
+    let y = &mut p.y;
+    *x += 1;
+    *y += 1;
+    println!("{} {}", p.x, p.y);
 }
