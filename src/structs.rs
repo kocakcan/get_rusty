@@ -140,7 +140,7 @@
 *       let black = Color(0, 0, 0);
 *       let origin = Point(0, 0, 0);
 *   }
-* Note that the black and origin values are different types because they're instanes of different
+* Note that the black and origin values are different types because they're instances of different
 * tuple structs. Each struct you define is its own type, even though the fields within the struct
 * might have the same types. For example, a function that takes a parameter of type Color cannot
 * take a Point as an argument, even though both types are made up of three i32 values. Otherwise,
@@ -149,6 +149,128 @@
 * tuples, tuple structs require you to name the type of the struct when you destructure them. For
 * example, we would write let Point(x, y, z) = origin; to destructure the values in the origin
 * point into variables name x, y, and z.
+*
+* Unit-Like Struct Without Any Fields
+*
+* You can also define structs that don't have any fields! These are called unit-like structs
+* because they behave similarly to (), the unit type. Unit-like structs can be useful when you need
+* to implement a trait on some type but don't have any data that you want to store in the type
+* itself.
+*
+*   struct AlwaysEqual;
+*
+*   fn main() {
+*       let subject = AlwaysEqual;
+*   }
+* To define AlwaysEqual, we use the struct keyword, the name we want, and then a semicolon. No need
+* for curly brackets or parantheses! Then we can get an instance of AlwaysEqual in the subject
+* variable in a similar way: using the name we defined, without any curly brackets or parantheses.
+* Imagine that later we'll implement behaviour for this type such that every instance of
+* AlwaysEqual is always equal to every instance of any other type, perhaps to have a known result
+* for testing purposes. We wouldn't need any data to implement that behaviour!
+*
+* Ownership of Struct Data
+*
+* In the User struct definition, we used the owned String type rather than the &str string slice
+* type. This is a deliberate choice because we want each instance of this struct to own all of its
+* data and for that data to be valid for as long as the entire struct is valid.
+*
+* It's also possible for structs to store references to data owned by something else, but to do so
+* requires the use of lifetimes. Lifetimes ensure that the data referenced by a struct is valid for
+* as long as the struct is. Let's say you try to store a reference in a struct without specifying
+* lifetimes, like the following; this won't work:
+*
+*   struct User {
+*       active: bool,
+*       username: &str,
+*       email: &str,
+*       sign_in_count: u64,
+*   }
+*
+* fn main() {
+*   let user1 = User {
+*       active: true,
+*       username: "someusername123",
+*       email:"someone@example.com",
+*       sign_in_count: 1,
+*   };
+* }
+* The compiler will complain that it needs lifetime specifiers.
+*
+* Borrowing Fields of a Struct
+*
+* Rust's borrow checker will track ownership permission at both the struct-level and field-level.
+* For example, if we borrow a field x of a Point structure, then both p and p.x temporarily lose
+* their permissions (but not p.y):
+*
+*   struct Point { x: i32, y: i32 }
+*
+*   let mut p = Point { x: 0, y: 0 };
+*
+*   -> p    | RWO
+*   -> p.x  | RWO
+*   -> p.y  | RWO
+*
+*   let x = &mut p.x;
+*
+*   -> p    | No permissions
+*   -> p.x  | No permissions
+*   -> x    | RO
+*   -> *x   | RW
+*
+*   *x += 1;    -> dereferencing requires RW
+*
+*   -> p    | RWO (regains permissions as x goes out of scope)
+*   -> p.x  | RWO (regains permissions as x goes out of scope)
+*
+*   println!("{}, {}", p.x, p.y);
+*
+*   -> p    | No permissions (goes out of scope)
+*   -> p.x  | No permissions (goes out of scope)
+*   -> p.y  | No permissions (goes out of scope)
+* As a result, if we try to use p while p.x is mutable borrowed like this:
+*
+* struct Point { x: i32, y: i32 }
+*
+* fn print_point(p: &Point) {
+*
+*   -> p        | RO
+*   -> *p       | R
+*   -> (*p).y   | R
+*   -> (*p).x   | R
+*
+* println!("{}, {}", p.x, p.y);
+*
+*   -> p        | No permissions (goes out of scope)
+*   -> *p       | No permissions (goes out of scope)
+*   -> (*p).y   | No permissions (goes out of scope)
+*   -> (*p).x   | No permissions (goes out of scope)
+* }
+*
+* fn main() {
+*   let mut p = Point { x: 0, y: 0 };
+*
+*   -> p    | RWO
+*   -> p.x  | RWO
+*   -> p.y  | RWO
+*
+*   let x = &mut p.x;
+*
+*   -> p    | No permissions (borrowed by x)
+*   -> p.x  | No permissions (borrowed by x)
+*   -> x    | RO
+*   -> *x   | RW
+*
+*   print_point(&p);
+*   *x += 1;
+* }
+* Then the compiler will reject our program with the following error: cannot borrow `p` as
+* immutable because it is also borrowed as mutable.
+*
+* More generally, if you encounter an ownership error that involves a struct, you should consider
+* which fields of your structure are supposed to be borrowed with which permissions. But be aware
+* of the borrow checker's limitations, since Rust may sometimes assume more fields are borrowed
+* than they actually are.
 */
 struct User {
     active: bool,
