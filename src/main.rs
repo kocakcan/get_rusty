@@ -1,13 +1,14 @@
 mod constants;
-mode meme;
 mod control_flow;
 mod converter;
 mod converter_boxed;
 mod data_types;
 mod document;
+mod example_program;
 mod fibonacci;
 mod fixing_ownership_errors;
 mod functions;
+mod meme;
 mod ownership;
 mod ownership_recap;
 mod practice;
