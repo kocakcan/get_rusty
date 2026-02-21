@@ -101,6 +101,45 @@
 * we want an instance of Rectangle to take another instance of Rectangle and return true if the
 * second Rectangle can fit completely within self (the first Rectangle); otherwise; it should
 * return false. That is, once we've defined the can_hold method.
+*
+*   fn main() {
+*       let rect1 = Rectangle {
+*           width: 30,
+*           height: 50,
+*       };
+*       let rect2 = Rectangle {
+*           width: 10,
+*           height: 40,
+*       };
+*       let rect3 = Rectangle {
+*           width: 60,
+*           height: 45
+*       };
+*
+*       println!("Can rect1 hold rect2? {}", rect1.can_hold(&rect2));
+*       println!("Can rect1 hold rect3? {}", rect1.can_hold(&rect3));
+*   }
+* We know we want to define a method, so it will be within the impl Rectangle block. The method
+* name will be can_hold, and it will take an immutable borrow of another Rectangle as a parameter.
+* We can tell what the type of paramter will be by looking at the code that calls the method:
+* rect1.can_hold(&rect2) passes in &rect2, which is an immutable borrow to rect2 (rather than
+* write, which would mean we'd need a mutable borrow), and we want main to retain ownership of
+* rect2 so we can use it again after calling the can_hold method. The return value of can_hold will
+* be a Boolean, and the implementation will check whether the width and height of self are greater
+* than the width and height of the other Rectangle respectively.
+*
+*   impl Rectangle {
+*       fn area(&self) -> u32 {
+*           self.width * self.height
+*       }
+*
+*       fn can_hold(&self, other: &Rectangle) -> bool {
+*           self.width > other.width && self.height && other.height
+*       }
+*   }
+* When we run this code with the main function we'll get our desired output. Methods can take
+* multiple parameters that we add to the signature after the self parameter, and those parameters
+* work just like parameters in functions.
 */
 #[derive(Debug)]
 struct Rectangle {
@@ -115,6 +154,10 @@ impl Rectangle {
     fn area(&self) -> u32 {
         self.width * self.height
     }
+
+    fn can_hold(&self, other: &Rectangle) -> bool {
+        self.width > other.width && self.height > other.height
+    }
 }
 
 fn main() {
@@ -122,6 +165,17 @@ fn main() {
         width: 30,
         height: 50,
     };
+    let rect2 = Rectangle {
+        width: 10,
+        height: 40,
+    };
+    let rect3 = Rectangle {
+        width: 60,
+        height: 45,
+    };
 
     println!("The area of rect1 is {}", rect1.area());
+
+    println!("Can rect1 hold rect2? {}", rect1.can_hold(&rect2));
+    println!("Can rect1 hold rect3? {}", rect1.can_hold(&rect3));
 }
