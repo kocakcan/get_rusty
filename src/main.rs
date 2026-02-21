@@ -9,6 +9,7 @@ mod fibonacci;
 mod fixing_ownership_errors;
 mod functions;
 mod meme;
+mod method_syntax;
 mod ownership;
 mod ownership_recap;
 mod practice;
