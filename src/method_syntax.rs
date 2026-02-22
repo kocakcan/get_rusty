@@ -140,6 +140,104 @@
 * When we run this code with the main function we'll get our desired output. Methods can take
 * multiple parameters that we add to the signature after the self parameter, and those parameters
 * work just like parameters in functions.
+*
+* Associated Functions
+*
+* All functions defined within an impl block are called associated functions because they're
+* associated with the type named after the impl. We can define associated functions as functions
+* that don't have self as their first parameter (and thus are not methods) because they don't need
+* an instance of the type to work with. We've already used one function like this: the String::from
+* function that's defined on the String type.
+*
+* Associated function that aren't methods are often used for constructors that will return a new
+* instance of the struct. These are often called new, but new isn't a special name and isn't built
+* into the language. For example, we could choose to provide an associated function named square
+* that would have one dimension parameter and use that as both width and height, thus making it
+* easier to create a square Rectangle rather than having to specify the same value twice:
+*
+*   impl Rectangle {
+*       fn square(size: u32) -> Self {
+*           Self {
+*               width: size,
+*               height: size,
+*           }
+*       }
+*   }
+* The Self keywords in the return type and in the body of the function are aliases for the type
+* that appears after the impl keyword, which in this case is Rectangle.
+*
+* To call this associated function, we use the :: syntax with the struct name; let sq =
+* Rectangle::square(3); is an example. This function is namespaced by the struct: the :: syntax is
+* used for both associated functions and namespaces created by modules.
+*
+* Multiple impl Blocks
+*
+* Each struct is allowed to have multiple impl blocks.
+*
+*   impl Rectangle {
+*       fn area(&self) -> u32 {
+*           self.width * self.height
+*       }
+*   }
+*
+*   impl Rectangle {
+*       fn can_hold(&self, other: &Rectangle) -> bool {
+*           self.width > other.width && self.height > other.height
+*       }
+*   }
+* There's no reason to separate these methods into multiple impl blocks here, but this is valid
+* syntax. They are useful in other situations.
+*
+* Method Calls are Syntactic Sugar for Function Calls
+*
+* Using the concepts we've discussed so far, we can now see how method calls are syntactic sugar
+* for function calls. For example:
+*
+*   impl Rectangle {
+*       fn area(&self) -> u32 {
+*           self.width * self.height
+*       }
+*
+*       fn set_width(&mut self, width: u32) {
+*           self.width = width;
+*       }
+*   }
+* And let's say we have a rectangle r. Then the method calls r.area() and r.set_width(2) are
+* equivalent to this:
+*
+*   let mut r = Rectangle {
+*       width: 1,
+*       height: 2
+*   };
+*   let area1 = r.area();
+*   let area2 = Rectangle::area(&r);
+*   assert_eq!(area1, area2);
+*
+*   r.set_width(2);
+*   Rectangle::set_width(&mut r, 2);
+* The method call r.area() becomes Rectangle::area(&r). The function name is the associated
+* function Rectangle::area. The function argument is the &self parameter. Rust automatically
+* inserts the borrowing operator &.
+*
+* The method call r.set_width(2) similarly becomes Rectangle::set_width(&mut r, 2). This method
+* expects &mut self, so the first argument is a mutable borrow &mut r. The second argument is
+* exactly the same, the number 2.
+*
+* As described earlier, Rust will insert as many references and dereferences as needed to make the
+* types match up for the self parameter. For example, here are two equivalent calls to area for a
+* mutable reference to a boxed rectangle:
+*
+*   let r = &mut Box::new(Rectangle {
+*       width: 1,
+*       height: 2,
+*   });
+*   let area1 = r.area().
+*   let area2 = Rectangle::area(&**r);
+*   assert_eq!(area1, area2);
+* Rust will add tow dereferences (once for the mutable reference, once for the box) and then one
+* immutable borrow because area expects &Rectangle. Note that this is also a situation where a
+* mutable reference is "downgraded" into a shared reference. Conversely, you would not be allowed
+* to call set_width on a value of type &Rectangle or &Box<Rectangle>.
 */
 #[derive(Debug)]
 struct Rectangle {
@@ -158,6 +256,25 @@ impl Rectangle {
     fn can_hold(&self, other: &Rectangle) -> bool {
         self.width > other.width && self.height > other.height
     }
+
+    fn square(size: u32) -> Self {
+        Self {
+            width: size,
+            height: size,
+        }
+    }
+
+    // These both calls are equivalent
+    // fn square(size: u32) -> Rectangle {
+    //     Rectangle {
+    //         width: size,
+    //         height: size,
+    //     }
+    // }
+
+    fn set_width(&mut self, width: u32) {
+        self.width = width;
+    }
 }
 
 fn main() {
@@ -173,8 +290,13 @@ fn main() {
         width: 60,
         height: 45,
     };
+    let mut square = Rectangle::square(5);
+
+    // Rectangle::set_width(&mut square, 10);   /* these both calls are equivalent */
+    square.set_width(10);
 
     println!("The area of rect1 is {}", rect1.area());
+    println!("The area of square is {}", square.area());
 
     println!("Can rect1 hold rect2? {}", rect1.can_hold(&rect2));
     println!("Can rect1 hold rect3? {}", rect1.can_hold(&rect3));
