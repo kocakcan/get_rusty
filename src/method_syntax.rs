@@ -36,14 +36,14 @@
 *       );
 *   }
 * To define the function within the context of Rectangle, we start an impl (implementation) block
-* for Rectangle. Everything withing this impl block will be associated with the Rectangle type.
+* for Rectangle. Everything within this impl block will be associated with the Rectangle type.
 * Then we move the area function within the impl curly brackets and change the first (and in this
 * case, only) parameter to be self in the signature and everywhere within the body. In main, where
 * we called the area function and passed rect1 as an argument, we can instead use method syntax to
 * call the area method on our Rectangle instance. The method syntax goes after an instance: we add
 * a dot followed by the method name, parantheses, and any arguments.
 *
-* In the signature for area, we &self instead of rectangle: Rectangle. The &self is actually short
+* In the signature for area, we use &self instead of rectangle: Rectangle. The &self is actually short
 * for self: &Self. Within an impl block, the type Self is an alias for the type that the impl block
 * is for. Methods must have a parameter named self of type Self for their first parameter, so Rust
 * lets you abbreviate this with only the name self in the first parameter spot. Note that we still
@@ -84,7 +84,7 @@
 *           println!("The rectangle has a nonzero width; it is {}", rect1.width);
 *       }
 *   }
-* Here, we're choosing to make the width method return true if the value in the instace's width
+* Here, we're choosing to make the width method return true if the value in the instance's width
 * field is greater than 0 and false if the value is 0: we can use a field within method of the same
 * name for any purpose. In main, when we follow rect1.width with parantheses, Rust knows we mean
 * the method width. When we don't use parantheses, Rust knows we mean the field width.
