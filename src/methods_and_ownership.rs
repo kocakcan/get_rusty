@@ -292,7 +292,6 @@ fn main() {
 
     let rect_ref = &mut rect;
 
-    // rect_ref.set_width(2);  /* this is not ok as it is not mutable */
     rect_ref.set_width(2);
 
     println!("{:?}", *rect_ref);
