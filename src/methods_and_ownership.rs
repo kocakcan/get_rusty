@@ -128,6 +128,135 @@
 * program would give us the following error:
 *
 *   borrow of moved value: `rect`
+* A similar situation arises if we try to call a self method on a reference. For instance, say we
+* tried to make a method set_to_max that assigns self to the output of self.max(..):
+*
+*   impl Rectangle {
+*       fn set_to_max(&mut self, other: Rectangle) {
+*           -> self             | R0
+*           -> *self            | RW
+*           -> (*self).width    | RW
+*           -> (*self).height   | RW
+*           -> other            | RO
+*           -> other.width      | RO
+*           -> other.height     | RO
+*
+*           *self = self.max(other);    -> dereferencing + assigning requires RW
+*                                       -> max moves its parameter but self doesn't have R
+*                                       permission
+*       }
+*   }
+* Then we can see that self is missing O permissions in the operation self.max(..). Rust therefore
+* rejects this program with the following error:
+*
+*   cannot move out of `*self` which is behind a mutable reference
+*
+* Good Moves vs Bad Moves
+*
+* For the case of Rectangle, it actually is safe to move out of *self, even though Rust doesn't let
+* you do it. For example, if we simulate a program that calls the rejected set_to_max, you can see
+* how nothing unsafe occurs:
+*
+*   impl Rectangle {
+*       fn set_to_max(&mut self, other: Rectangle) {
+*           let max = self.max(other);
+*           *self = max;
+*       }
+*   }
+*
+*   fn main() {
+*       let mut rect = Rectangle { width: 0, height: 1 };
+*       let other_rect = Rectangle { width: 1, height: 0 };
+*       rect.set_to_max(other_rect);
+*   }
+*
+* The reason it's safe to move out of *self is because Rectangle does not own any heap data. In
+* fact, we can actually get Rust to compile set_to_max by simply adding #[derive(Copy, Clone)] to
+* the definition of Rectangle:
+*
+*   #[derive(Copy, Clone)]
+*   struct Rectangle {
+*       width: u32,
+*       height: u32,
+*   }
+*
+*   impl Rectangle {
+*       fn set_to_max(&mut self, other: Rectangle) {
+*           -> *self            | RW
+*           -> self             | RO
+*           -> (*self).width    | RW
+*           -> (*self).height   | RW
+*           -> other            | RO
+*           -> other.width      | RO
+*           -> other.heigth     | RO
+*
+*           *self = sef.max(other);     -> dereferencing + assigning requires RW
+*       }
+*   }
+* Notice that unlike before, self.max(other) no longer requires the O permission on *self or other.
+* Remember that self.max(other) desugars to Rectangle::max(*self, other). The dereference *self
+* does not require ownership over *self i Rectangle is copyable.
+*
+* You might wonder: why doesn't Rust automatically derive Copy for Rectangle? Rust does not
+* auto-derive Copy for stability across API changes. Imagine that the author of the Rectangle type
+* decided to add a name: String field. Then all client code that relies on Rectangle being Copy
+* would suddenly get rejected by the compiler. To avoid that issue, API authors must explicitly add
+* #[derive(Copy, Clone)] to indicate that they expect their struct to always be Copy.
+*
+* To better understand the issue, let's run a simulation. Say we added name: String to Rectangle.
+* What would happen if Rust allowed set_to_max to compile?
+*
+*   struct Rectangle {
+*       width: u32,
+*       height: u32,
+*       name: String,
+*   }
+*
+*   impl Rectangle {
+*       fn set_to_max(&mut self, other: Rectangle) {
+*          let max = self.max(other);   -> L2
+*          drop(*self); -> this is usually implicit, but added here for clarity
+*
+*           *self = max;
+*       }
+*   }
+*
+*   fn main() {
+*       let mut r1 = Rectangle {
+*           width: 9,
+*           height: 9,
+*           name: String::from("r1")
+*       };
+*       let r2 = Rectangle {
+*           width: 16,
+*           height: 16,
+*           name: String::from("r2")
+*       };
+*       r1.set_to_max(r2);
+*   }
+*
+* In this program, we call set_to_max with two rectangles r1 and r2. self is a mutable reference to
+* r1 and other is a move of r2. After calling self.max(other), the max method consumes ownership of
+* both rectangles. When max returns, Rust deallocates both strings "r1" and "r2" in the heap.
+* Notice the problem: at the location L2, *self is supposed to be readable and writeable. However
+* (*self).name (actually r1.name) has been deallocated.
+*
+* Therefore when we do *self = max, we encounter undefined behaviour. Then we overwrite *self, Rust
+* will implicitly drop the data previously in *self. To make that behaviour explicit, we have added
+* drop(*self). After calling drop(*self), Rust attempts to free (*self).name a second time. That
+* action is a double-free, which is undefined behaviour.
+*
+* So remember: when you see an error like "cannot move out of *self", that's usually because you're
+* trying to call a self method on a reference like &self or &mut self. Rust is protecting you from
+* a double-free.
+*
+* Summary
+*
+* Structs let you create custom types that are meaningful for your domain. By using structs, you
+* can keep associated pieces of data connected to each other and name each piece to make your code
+* clear. In impl blocks, you can define functions that are associated with your type, and methods
+* are a kind of associated function that let you specify the behaviour that instances of your
+* structs have.
 */
 #[derive(Debug)]
 struct Rectangle {
