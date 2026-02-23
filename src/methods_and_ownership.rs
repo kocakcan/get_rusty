@@ -92,6 +92,42 @@
 *
 *   rect_ref.set_width(2);                  -> but this is still not ok
 *                                           -> as it is an immutable reference 😉
+*
+* Moves with self
+*
+* Calling a method that expects self will move the input struct (unless the struct implements
+* Copy). For example, we cannot use a Rectangle after passing it to max:
+*
+*   let rect = Rectangle {
+*       width: 0,
+*       height: 0,
+*   };
+*
+*   -> rect         | RO
+*   -> rect.width   | RO
+*   -> rect.height  | RO
+*
+*   let other_rect = Rectangle {
+*       width: 1,
+*       height: 1,
+*   };
+*
+*   > other_rect        | RO
+*   > other_rect.width  | RO
+*   > other_rect.height | RO
+*
+*   let max_rect = rect.max(other_rect);    -> max requires RO permissions and moves rect
+*
+*   -> rect                 | No permissions (moved by max_rect)
+*   -> rect.width           | No permissions (moved by max_rect)
+*   -> rect.height          | No permissions (moved by max_rect)
+*   -> other_rect           | No permissions (moved by max_rect)
+*   -> other_rect.width     | No permissions (moved by max_rect)
+*   -> other_rect.height    | No permissions (moved by max_rect)
+* Once we call rect.max(..), we move rect and so lose all permissions on it. Trying to compile this
+* program would give us the following error:
+*
+*   borrow of moved value: `rect`
 */
 #[derive(Debug)]
 struct Rectangle {
