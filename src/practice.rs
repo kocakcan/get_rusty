@@ -115,16 +115,71 @@
 //     println!("the first word is: {}", word);
 // }
 
-struct Point {
-    x: i32,
-    y: i32,
+#[derive(Copy, Clone, Debug)]
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
+
+    fn can_hold(&self, other: &Rectangle) -> bool {
+        self.width >= other.width && self.height >= other.height
+    }
+    fn square(size: u32) -> Self {
+        Self {
+            width: size,
+            height: size,
+        }
+    }
+
+    fn set_width(&mut self, width: u32) {
+        self.width = width;
+    }
+
+    fn max(self, other: Rectangle) -> Rectangle {
+        Rectangle {
+            width: self.width.max(other.width),
+            height: self.height.max(other.height),
+        }
+    }
+
+    fn set_to_max(&mut self, other: Rectangle) {
+        *self = self.max(other);
+    }
 }
 
 fn main() {
-    let mut p = Point { x: 5, y: 6 };
-    let x = &mut p.x;
-    let y = &mut p.y;
-    *x += 1;
-    *y += 1;
-    println!("{} {}", p.x, p.y);
+    let mut rect1 = Rectangle {
+        width: 10,
+        height: 20,
+    };
+    let rect2 = Rectangle {
+        width: 20,
+        height: 20,
+    };
+
+    println!(
+        "Can rect1 hold rect2? {}",
+        Rectangle::can_hold(&rect1, &rect2)
+    );
+
+    // Rectangle::set_width(&mut rect1, 40);
+    rect1.set_width(40);
+
+    println!(
+        "Can rect1 hold rect2 now? {}",
+        Rectangle::can_hold(&rect1, &rect2)
+    );
+
+    rect1.set_to_max(rect2);
+
+    println!(
+        "rect1 {:?} has the area of {} square pixels.",
+        rect1,
+        rect1.area()
+    );
 }

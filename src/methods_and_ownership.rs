@@ -142,7 +142,7 @@
 *           -> other.height     | RO
 *
 *           *self = self.max(other);    -> dereferencing + assigning requires RW
-*                                       -> max moves its parameter but self doesn't have R
+*                                       -> max moves its parameter but self doesn't have O
 *                                       permission
 *       }
 *   }
@@ -190,7 +190,7 @@
 *           -> other.width      | RO
 *           -> other.heigth     | RO
 *
-*           *self = sef.max(other);     -> dereferencing + assigning requires RW
+*           *self = self.max(other);     -> dereferencing + assigning requires RW
 *       }
 *   }
 * Notice that unlike before, self.max(other) no longer requires the O permission on *self or other.
