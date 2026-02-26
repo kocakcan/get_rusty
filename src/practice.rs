@@ -147,8 +147,14 @@ impl Rectangle {
         }
     }
 
+    // fn set_to_max(&mut self, other: Rectangle) {
+    //     *self = self.max(other);
+    // }
+
     fn set_to_max(&mut self, other: Rectangle) {
-        *self = self.max(other);
+        let max = self.max(other); // max takes ownership of self
+        drop(*self); // self is dropped afterwards
+        *self = max; // cannot use self anymore
     }
 }
 
