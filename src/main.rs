@@ -4,6 +4,7 @@ mod converter;
 mod converter_boxed;
 mod data_types;
 mod document;
+mod enums;
 mod example_program;
 mod fibonacci;
 mod fixing_ownership_errors;
