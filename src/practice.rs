@@ -158,6 +158,12 @@ impl Rectangle {
     }
 }
 
+impl std::fmt::Display for Rectangle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Width: {} | Height: {}", self.width, self.height)
+    }
+}
+
 fn main() {
     let mut rect1 = Rectangle {
         width: 10,
@@ -183,9 +189,5 @@ fn main() {
 
     rect1.set_to_max(rect2);
 
-    println!(
-        "rect1 {:?} has the area of {} square pixels.",
-        rect1,
-        rect1.area()
-    );
+    println!("{} has the area of {} square pixels.", rect1, rect1.area());
 }
