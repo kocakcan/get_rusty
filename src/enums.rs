@@ -49,6 +49,30 @@
  *
  *  route(IpAddrKind::V4);
  *  route(IpAddrKind::V6);
+ * Using enums has even more advantages. Thinking more about our IP address type, at the moment we
+ * don't have a way to store the actual IP address data; we only know what kind it is.
+ *
+ *  enum IpAddrKind {
+ *      V4,
+ *      V6,
+ *  }
+ *
+ *  struct IpAddr {
+ *      kind: IpAddrKind,
+ *      address: String,
+ *  }
+ *
+ *  let home = IpAddr {
+ *      kind: IpAddrKind::V4,
+ *      address: String::from("127.0.0.1"),
+ *  };
+ *
+ *  let loopback = IpAddr {
+ *      kind: IpAddrKind::V6,
+*       address: String::from("::1"),
+ *  };
+* Here we've defined a struct IpAddr that has two fields: a kind field that is of type IpAddrKind
+* (the enum we defined previously) and an address field of type String.
  */
 
 #[derive(Debug)]
