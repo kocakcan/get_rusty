@@ -192,4 +192,97 @@ fn main() {
  * The body of the method would use self to get the value that we called the method on. In this
  * example, we've created a variable m that has the value Message::Write(String::from("hello")),
  * and that is what self will be in the body of the call when m.call() runs.
+ *
+ * The Option Enum and Its Advantages Over Null Values
+ *
+ * The Option type, which is another enum defined by the standard library, encodes the very common
+ * scenario in which a value could be something or it could be nothing.
+ *
+ * For example, if you request the first item in a non-empty list, you would get a value. If you
+ * request the first item in an empty list, you would get nothing. Expressing this concept in terms
+ * of the type system means the compiler can check whether you've handled all the cases you should
+ * be handling; this functionality can prevent bugs that are extremely common in other programming
+ * languages.
+ *
+ * Rust doesn't have the null feature that many other programming languages have. Null is a value
+ * that means there is no value there. In languages with null, variables can always be in or of two
+ * states: null or not-null.
+ *
+ * The problem with null values is that if you try to use a null value as a not-null value, you'll
+ * get an error of some kind. Because this null or non-null property is pervasive, it's extremely
+ * easy to make this kind of error.
+ *
+ * However, the concept that null is trying to express is still a useful one: a null is a value
+ * that is currently invalid or absent for some reason.
+ *
+ * The problem isn't really with the concept but with the particular implementation. As such, Rust
+ * does not have nulls, but it does have an enum that can encode the concept of a value being
+ * present or absent. This enum is Option<T>, and it is defined by the standard library as follows:
+ *
+ *  enum Option<T> {
+ *      None,
+ *      Some(T),
+ *  }
+ * The Option<T> enum is so useful that it's even included in the prelude; you don't need to bring
+ * it into scope explicitly. It variants are also included in the prelude: you can use Some and
+ * None directly without the Option:: prefix. The Option<T> enum is just a regular enum, and
+ * Some(T) and None are still variants of type Option<T>.
+ *
+ * The <T> syntax is a generic type parameter. <T> means that the Some variant of the Option enum
+ * can hold one piece of data of any type, and that each concrete type that gets used in place of T
+ * makes the overall Option<T> type a different type.
+ *
+ *  let some_number = Some(5);
+ *  let some_char = Some('e');
+ *
+ *  let absent_number: Option<i32> = None;
+ * The type of some_number is Option<i32>. The type of some_char is Option<char>, which is a
+ * different type. Rust can infer these types because we've specified a value inside the Some
+ * variant. For absent_number, Rust requires us to annotate the overall Option type: the compiler
+ * can't infer the type that the corresponding Some variant will hold by looking only at a None
+ * value. Here, we tell Rust that we mean for absent_number to be of type Option<i32>.
+ *
+ * When we have a Some value, we know that a value is present and the value is held within the
+ * Some. When we have a None value, in some sense it means the same thing as null: we don't have a
+ * valid value. So why is having Option<T> any better than having null?
+ *
+ * In short, because Option<T> and T (where T can be any type) are differen types, the compiler
+ * won't let us use an Option<T> value as if it were definitely a valid value. For example, this
+ * code won't compile, because it's trying to add an i8 to an Option<i8>:
+ *
+ *  let x: i8 = 5;
+ *  let y: Option<i32> = Some(5);
+ *
+ *  let sum = x + y;
+ * If we run this code, we get an error message like this one:
+ *
+ *  cannot add `Option<i8>` to `i8`
+ *
+ * In effect, this error message means that Rust doesn't understand how to add an i8 and an
+ * Option<i8>, because they're different types. When we have a value of a type like i8 in Rust, the
+ * compiler will ensure that we always have a valid value. We can proceed confidently without
+ * having to check for null before using that value. Only when we have an Option<i8> (or whatever
+ * type of value we're working with) do we have to worry about possibly not having a value, and the
+ * compiler will make sure we handle that case before using the value.
+ *
+ * In other words, you have to convert an Option<T> to a T before you can perform T operations with
+ * it. Generally, this helps catch one of the most common issues with null: assuming that something
+ * isn't null when it actually is.
+ *
+ * Eliminating the risk of incorrectly assuming a not-null value helps to be more confident in your
+ * code. In order to have a value that can possibly be null, you must explicitly opt in by making
+ * the type of that value Option<T>. Then, when you use that value, you are required to explicitly
+ * handle the case when the value is null. Everywhere that a value has a type that isn't an
+ * Option<T>, you can safely assume that the value isn't null.
+ *
+ * So how do you get the T value out of a Some variant when you have a value of type Option<T> so
+ * that you can use that value? The Option<T> enum has a large number of methods that are useful in
+ * a variety of situations.
+ *
+ * In general, in order to use an Option<T> value, you want to have code that will handle each
+ * variant. You want some code that will run only when you ahve a Some(T) value, and this code is
+ * allowed to use the inner T. You want some other code to run only if you have a None value, and
+ * that code doesn't have a T value available. The match expression is a control flow construct
+ * that does just this when used with enums: it will run different code depending on which variant
+ * of the enum it has, and that code can use the data inside the matching value.
  */
