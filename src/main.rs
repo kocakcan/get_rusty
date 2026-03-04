@@ -9,6 +9,7 @@ mod example_program;
 mod fibonacci;
 mod fixing_ownership_errors;
 mod functions;
+mod match_construct;
 mod meme;
 mod method_syntax;
 mod methods_and_ownership;
