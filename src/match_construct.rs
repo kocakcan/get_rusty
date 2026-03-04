@@ -63,12 +63,61 @@
  *          Coin::Quarter => 25,
  *      }
  *  }
+ *
+ * Pattern That Binds to Values
+ *
+ * Another useful feature of match arms is that they can bind to the parts of the values that match
+ * the pattern. This is how we can extract values out of enum variants.
+ *
+ *  #[derive(Debug)]
+ *  enum UsState {
+ *      Alabama,
+ *      Alaska,
+ *      --snip--
+ *  }
+ *
+ *  enum Coin {
+ *      Penny,
+ *      Nickel,
+ *      Dime,
+ *      Quarter(UsState),
+ *  }
+ * Let's imagine that a friend is trying to collect all 50 state quarters. While we sort our loose
+ * change by coin type, we'll also call out the name of the state associated with each quarter so
+ * that if it's one our friend doesn't have, they can add it to their collection.
+ *
+ * In the match expression for this code, we add a variable called state to the pattern that
+ * matches of the variant Coin::Quarter. When a Coin::Quarter matches, the state variable will bind
+ * to the value of that quarter's state. Then we can use state in he code for that arm, like so:
+ *
+ *  fn value_in_cents(coin: Coin) -> u8 {
+ *      match coin {
+ *          Coin::Penny => 1,
+ *          Coin::Nickel => 5,
+ *          Coin::Dime => 10,
+ *          Coin::Quarter(state) => {
+ *              println!("State quarter from {state:?}");
+ *              25
+ *          }
+ *      }
+ *  }
+ * If we were to call value_in_cents(Coin::Quarter(UsState::Alaska)), coin would be
+* Coin::Quarter(UsState::Alaska). When we compare that value with each of the match arms, none of
+* them match until we reach Coin::Quarter(state). At that point, the binding for state will be the
+* value UsState::Alaska. We can then use that binding in the println! expression, thus getting the
+* inner state value out of the Coin enum variant for Quarter.
  */
 enum Coin {
     Penny,
     Nickel,
     Dime,
-    Quarter,
+    Quarter(UsState),
+}
+
+#[derive(Debug)]
+enum UsState {
+    Alaska,
+    Alabama,
 }
 
 fn value_in_cents(coin: Coin) -> u8 {
@@ -79,10 +128,13 @@ fn value_in_cents(coin: Coin) -> u8 {
         }
         Coin::Nickel => 5,
         Coin::Dime => 10,
-        Coin::Quarter => 25,
+        Coin::Quarter(state) => {
+            println!("State quarter from {state:?}");
+            25
+        }
     }
 }
 
 fn main() {
-    println!("{}", value_in_cents(Coin::Quarter));
+    println!("{}", value_in_cents(Coin::Quarter(UsState::Alaska)));
 }
