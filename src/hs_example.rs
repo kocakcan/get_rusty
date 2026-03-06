@@ -1,23 +1,28 @@
 enum Card {
     Spell {
+        name: String,
         mana_cost: u8,
         spell_school: u8,
         class: String,
     },
     Minion {
+        name: String,
         mana_cost: u8,
         minion_type: String,
         class: String,
     },
     Location {
+        name: String,
         mana_cost: u8,
         class: String,
     },
     Weapon {
+        name: String,
         mana_cost: u8,
         class: String,
     },
     Hero {
+        name: String,
         mana_cost: u8,
         class: String,
     },
@@ -26,46 +31,69 @@ enum Card {
 fn printc(card: Card) {
     match card {
         Card::Spell {
-            mana_cost: mana_cost,
-            spell_school: spell_school,
-            class: class,
+            name,
+            mana_cost,
+            spell_school,
+            class,
         } => {
             println!(
-                "Mana: {} | Spell school: {} | Class: {}",
-                mana_cost, spell_school, class
+                "Name: {} | Mana: {} | Spell school: {} | Class: {}",
+                name, mana_cost, spell_school, class
             );
         }
         Card::Minion {
-            mana_cost: mana_cost,
-            minion_type: minion_type,
-            class: class,
+            name,
+            mana_cost,
+            minion_type,
+            class,
         } => {
             println!(
-                "Mana: {} | Minion type: {} | Class: {}",
-                mana_cost, minion_type, class
+                "Name: {} | Mana: {} | Minion type: {} | Class: {}",
+                name, mana_cost, minion_type, class
             );
         }
         Card::Location {
-            mana_cost: mana_cost,
-            class: class,
+            name,
+            mana_cost,
+            class,
         }
         | Card::Weapon {
-            mana_cost: mana_cost,
-            class: class,
+            name,
+            mana_cost,
+            class,
         }
         | Card::Hero {
-            mana_cost: mana_cost,
-            class: class,
+            name,
+            mana_cost,
+            class,
         } => {
-            println!("Mana: {} | Class: {}", mana_cost, class);
+            println!("Name: {} | Mana: {} | Class: {}", name, mana_cost, class);
         }
     }
 }
 
+// TODO: Spell school, minion type, and class should be enum
 fn main() {
     printc(Card::Minion {
+        name: String::from("Edwin van Cleef"),
         mana_cost: 3,
         minion_type: String::from("Pirate"),
         class: String::from("Rogue"),
+    });
+
+    printc(Card::Hero {
+        name: String::from("Deathwing, Worldbreaker"),
+        mana_cost: 10,
+        class: String::from("Neutral"),
+    });
+    printc(Card::Weapon {
+        name: String::from("Kingsbane"),
+        mana_cost: 1,
+        class: String::from("Rogue"),
+    });
+    printc(Card::Location {
+        name: String::from("Amirdrassil"),
+        mana_cost: 5,
+        class: String::from("Druid"),
     });
 }
