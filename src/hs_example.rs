@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 enum Card {
     Spell {
         name: String,
@@ -164,4 +166,11 @@ fn main() {
         class: Class::Rogue,
         text: String::from("The next spell you cast this turn costs (2) less."),
     });
+    let sample_text = "Combo:";
+
+    let bold_text = format!(
+        "{} {}",
+        "Combo:".bold(),
+        "Gain +2/+2 for each other card you've played this turn."
+    );
 }
