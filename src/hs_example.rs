@@ -123,7 +123,6 @@ fn main() {
         minion_type: MinionType::Pirate,
         class: Class::Rogue,
     });
-
     printc(Card::Hero {
         name: String::from("Deathwing, Worldbreaker"),
         mana_cost: 10,
@@ -138,5 +137,11 @@ fn main() {
         name: String::from("Amirdrassil"),
         mana_cost: 5,
         class: Class::Druid,
+    });
+    printc(Card::Spell {
+        name: String::from("Preparation"),
+        mana_cost: 0,
+        spell_school: SpellSchool::Shadow,
+        class: Class::Rogue,
     });
 }
