@@ -11,6 +11,7 @@ mod fibonacci;
 mod fixing_ownership_errors;
 mod functions;
 mod hs_example;
+mod if_let;
 mod match_construct;
 mod meme;
 mod method_syntax;
