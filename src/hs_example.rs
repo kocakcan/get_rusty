@@ -4,27 +4,32 @@ enum Card {
         mana_cost: u8,
         spell_school: SpellSchool,
         class: Class,
+        text: String,
     },
     Minion {
         name: String,
         mana_cost: u8,
         minion_type: MinionType,
         class: Class,
+        text: String,
     },
     Location {
         name: String,
         mana_cost: u8,
         class: Class,
+        text: String,
     },
     Weapon {
         name: String,
         mana_cost: u8,
         class: Class,
+        text: String,
     },
     Hero {
         name: String,
         mana_cost: u8,
         class: Class,
+        text: String,
     },
 }
 
@@ -79,10 +84,11 @@ fn printc(card: Card) {
             mana_cost,
             spell_school,
             class,
+            text,
         } => {
             println!(
-                "Name: {} | Mana: {} | Spell school: {:?} | Class: {:?}",
-                name, mana_cost, spell_school, class
+                "Name: {} | Mana: {} | Spell school: {:?} | Class: {:?} | Text: {}",
+                name, mana_cost, spell_school, class, text
             );
         }
         Card::Minion {
@@ -90,28 +96,35 @@ fn printc(card: Card) {
             mana_cost,
             minion_type,
             class,
+            text,
         } => {
             println!(
-                "Name: {} | Mana: {} | Minion type: {:?} | Class: {:?}",
-                name, mana_cost, minion_type, class
+                "Name: {} | Mana: {} | Minion type: {:?} | Class: {:?} | Text: {}",
+                name, mana_cost, minion_type, class, text
             );
         }
         Card::Location {
             name,
             mana_cost,
             class,
+            text,
         }
         | Card::Weapon {
             name,
             mana_cost,
             class,
+            text,
         }
         | Card::Hero {
             name,
             mana_cost,
             class,
+            text,
         } => {
-            println!("Name: {} | Mana: {} | Class: {:?}", name, mana_cost, class);
+            println!(
+                "Name: {} | Mana: {} | Class: {:?} | Text: {}",
+                name, mana_cost, class, text
+            );
         }
     }
 }
@@ -122,26 +135,33 @@ fn main() {
         mana_cost: 3,
         minion_type: MinionType::Pirate,
         class: Class::Rogue,
+        text: String::from("Combo: Gain +2/+2 for each other card you've played this turn."),
     });
     printc(Card::Hero {
         name: String::from("Deathwing, Worldbreaker"),
         mana_cost: 10,
         class: Class::Neutral,
+        text: String::from("Battlecry: Choose 1 Cataclysm to unleash! Herald twice to upgrade."),
     });
     printc(Card::Weapon {
         name: String::from("Kingsbane"),
         mana_cost: 1,
         class: Class::Rogue,
+        text: String::from("Always keeps enhancements. Deathrattle: Shuffle this into your deck."),
     });
     printc(Card::Location {
         name: String::from("Amirdrassil"),
         mana_cost: 5,
         class: Class::Druid,
+        text: String::from(
+            "Summon a 1-Cost minion. Gain 1 Armor. Draw 1 card. Refresh 1 Mana Crystal. (Improves each use!)",
+        ),
     });
     printc(Card::Spell {
         name: String::from("Preparation"),
         mana_cost: 0,
         spell_school: SpellSchool::Shadow,
         class: Class::Rogue,
+        text: String::from("The next spell you cast this turn costs (2) less."),
     });
 }
