@@ -18,6 +18,7 @@ mod methods_and_ownership;
 mod ownership;
 mod ownership_inventory;
 mod ownership_recap;
+mod packages_and_crates;
 mod practice;
 mod question;
 mod quiz;
