@@ -28,8 +28,6 @@ mod structs;
 mod the_slice_type;
 mod variables_and_mutability;
 
-use colored::*;
-
 enum Card {
     Spell {
         name: String,
@@ -109,7 +107,7 @@ enum SpellSchool {
     General,
 }
 
-fn printc(card: Card) {
+fn printc(card: &Card) {
     match card {
         Card::Spell {
             name,
@@ -161,46 +159,54 @@ fn printc(card: Card) {
     }
 }
 
-fn main() {
-    printc(Card::Minion {
-        name: String::from("Edwin van Cleef"),
-        mana_cost: 3,
-        minion_type: MinionType::Pirate,
-        class: Class::Rogue,
-        text: String::from("Combo: Gain +2/+2 for each other card you've played this turn."),
-    });
-    printc(Card::Hero {
-        name: String::from("Deathwing, Worldbreaker"),
-        mana_cost: 10,
-        class: Class::Neutral,
-        text: String::from("Battlecry: Choose 1 Cataclysm to unleash! Herald twice to upgrade."),
-    });
-    printc(Card::Weapon {
-        name: String::from("Kingsbane"),
-        mana_cost: 1,
-        class: Class::Rogue,
-        text: String::from("Always keeps enhancements. Deathrattle: Shuffle this into your deck."),
-    });
-    printc(Card::Location {
-        name: String::from("Amirdrassil"),
-        mana_cost: 5,
-        class: Class::Druid,
-        text: String::from(
-            "Summon a 1-Cost minion. Gain 1 Armor. Draw 1 card. Refresh 1 Mana Crystal. (Improves each use!)",
-        ),
-    });
-    printc(Card::Spell {
-        name: String::from("Preparation"),
-        mana_cost: 0,
-        spell_school: SpellSchool::Shadow,
-        class: Class::Rogue,
-        text: String::from("The next spell you cast this turn costs (2) less."),
-    });
+fn printd(deck: &[Card]) {
+    for card in deck {
+        printc(card);
+    }
+}
 
-    let bold_text = format!(
-        "{} {}",
-        "Combo:".bold(),
-        "Gain +2/+2 for each other card you've played this turn."
-    );
-    println!("{}", bold_text);
+fn main() {
+    let custom_deck: Vec<Card> = vec![
+        Card::Minion {
+            name: String::from("Edwin van Cleef"),
+            mana_cost: 3,
+            minion_type: MinionType::Pirate,
+            class: Class::Rogue,
+            text: String::from("Combo: Gain +2/+2 for each other card you've played this turn."),
+        },
+        Card::Hero {
+            name: String::from("Deathwing, Worldbreaker"),
+            mana_cost: 10,
+            class: Class::Neutral,
+            text: String::from(
+                "Battlecry: Choose 1 Cataclysm to unleash! Herald twice to upgrade.",
+            ),
+        },
+        Card::Weapon {
+            name: String::from("Kingsbane"),
+            mana_cost: 1,
+            class: Class::Rogue,
+            text: String::from(
+                "Always keeps enhancements. Deathrattle: Shuffle this into your deck.",
+            ),
+        },
+        Card::Location {
+            name: String::from("Amirdrassil"),
+            mana_cost: 5,
+            class: Class::Druid,
+            text: String::from(
+                "Summon a 1-Cost minion. Gain 1 Armor. Draw 1 card. Refresh 1 Mana Crystal. (Improves each use!)",
+            ),
+        },
+        Card::Spell {
+            name: String::from("Preparation"),
+            mana_cost: 0,
+            spell_school: SpellSchool::Shadow,
+            class: Class::Rogue,
+            text: String::from("The next spell you cast this turn costs (2) less."),
+        },
+    ];
+
+    printd(&custom_deck);
+    println!("There are {} cards in the deck", custom_deck.len());
 }
