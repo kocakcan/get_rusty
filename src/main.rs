@@ -3,6 +3,7 @@ mod control_flow;
 mod converter;
 mod converter_boxed;
 mod data_types;
+mod defining_modules;
 mod document;
 mod enum_practice;
 mod enums;

@@ -30,4 +30,7 @@
  * that contains the binary crate for the command line tool you've been using to build your code.
  * The Cargo package also contains a library crate that binary crate depends on. Other projects can
  * depend on the Cargo library crate to use the same logic the Cargo command line tool uses.
+ *
+ * A package can contain as many binary crates as you like, but at most only one library crate. A
+ * package must contain at least one crate, whether that's a library of binary crate.
  */
