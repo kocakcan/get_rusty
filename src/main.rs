@@ -1,34 +1,3 @@
-mod constants;
-mod control_flow;
-mod converter;
-mod converter_boxed;
-mod data_types;
-mod defining_modules;
-mod document;
-mod enum_practice;
-mod enums;
-mod example_program;
-mod fibonacci;
-mod fixing_ownership_errors;
-mod functions;
-mod if_let;
-mod match_construct;
-mod meme;
-mod method_syntax;
-mod methods_and_ownership;
-mod ownership;
-mod ownership_inventory;
-mod ownership_recap;
-mod packages_and_crates;
-mod practice;
-mod question;
-mod quiz;
-mod references_and_borrowing;
-mod shadowing;
-mod structs;
-mod the_slice_type;
-mod variables_and_mutability;
-
 enum Card {
     Spell {
         name: String,
