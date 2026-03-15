@@ -56,9 +56,9 @@ mod back_of_house {
     }
 }
 
-mod customer {
-    use crate::front_of_house::hosting;
+use crate::front_of_house::hosting::add_to_waitlist;
 
+mod customer {
     pub fn eat_at_restaurant() {
         // Absolute path
         hosting::add_to_waitlist();
