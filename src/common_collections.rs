@@ -117,4 +117,120 @@
  * there isn't enough room to put all the elements next to each other where the vector is currently
  * stored. In that case, the reference to the first element would be pointing to deallocated
  * memory. The borrowing rules prevents programs from ending up in that situation.
+ *
+ * Iterating over the Values in a Vector
+ *
+ * To access each element in a vector in turn, we would iterate through all of the elements rather
+ * than use indices to access one at a time. The code below shows how to use for loop to get
+ * immutable references to each element in a vector of i32 values and print them.
+ *
+ *  let v = vec![100, 32, 57];
+ *  for i in &v {
+ *      println!("{i}");
+ *  }
+ * To read the number that n_ref refers to, we have to use the * dereference operator to get to the
+ * value in n_ref before we can add 1 to it.
+ *
+ * We can also iterate over mutable references to each element in a mutable vector in order to make
+ * changes to all the elements. The for loop below will add 50 to each element.
+ *
+ *  let mut v = vec![100, 32, 57];
+ *  for i in &mut v {
+ *      *i += 50;
+ *  }
+ * To change the value that the mutable reference refers to, we again use the * dereference
+ * operator to get to the value in n_ref before we can use the += operator.
+ *
+ * Safely Using Iterators
+ *
+ * Iterators contain a pointer to data within the vector. We can see how iterators work by
+ * desugaring a for-loop into the corresponding method calls of Vec::iter and Iterator::next:
+ *
+ *  let mut v: Vec<i32>             = vec![1, 2];
+ *  let mut iter: Iter<'_, i32>     = v.iter();             -> L1
+ *  let n1: &i32                    = iter.next().unwrap(); -> L2
+ *  let n2: &i32                    = iter.next().unwrap(); -> L3
+ *  let end: Option<&i32>           = iter.next();          -> L4
+ * Observe that the iterator iter is a pointer that moves through each element of the vector. The
+ * next method advances the iterator and returns an optional reference to the previous element,
+ * either Some (which we unwrap) or None at the end of the vector.
+ *
+ * This detail is relevant to safely using vectors. For example, say we wanted to duplicate a
+ * vector in place, such as [1, 2] becoming [1, 2, 1, 2]. A naive implementation might look like
+ * this, annotated with the permissions inferred by the compiler:
+ *
+ *  fn dup_in_place(v: &mut Vec<i32>) {
+ *      for n_ref in v.iter() {
+ *          -> *v       | R (loses W due to mutable reference)
+ *          -> v        | R (loses O after v.iter())
+ *          -> n_ref    | RO
+ *          -> *n_ref   | R
+ *
+ *          v.push(*n_ref);     -> push() requires RW (v doesn't have W)
+ *      }
+ *  }
+ * Notice that v.iter() removes the W permission from *v. Therefore the v.push(..) operation is
+ * missing the expected W permission. The Rust compiler will reject this program with a
+ * corresponding error message:
+ *
+ *  cannot borrow `*v` as mutable because it is also borrowed as immutable
+ * The safety issue beneath this error is reading deallocated memory. As soon as v.push(1) happens,
+ * the vector will reallocate its contents and invalidate the iterator's pointer. So to use
+ * iterators safely, Rust does not allow you to add or remove elements from the vector during iteration.
+ *
+ * One way to iterate over a vector without using a pointer is with a range, like we used for
+ * string slices. For example, the range 0..v.len() is an iterator over all indices of a vector v,
+ * as shown below:
+ *
+ *  let mut v: Vec<i32>         = vec![1, 2];
+ *  let mut iter: Range<usize>  = 0..v.len();
+ *  let i1: usize               = iter.next().unwrap();
+ *  let n1: &i32                =&v[i1];
+ *
+ * Using an Enum to Store Multiple Types
+ *
+ * Vectors can only store values that are of the same type. This can be inconvenient; there are
+ * definitely use cases for needing to store a list of items of different type. Fortunately, the
+ * variants of an enum are defined under the same enum type, so when we need one type to represent
+ * elements of different types, we can define and use an enum!
+ *
+ * For example, say we want to get values from a row in a spreadsheet in which some of the columns
+ * in the row contain integers, some floating-point numbers, and some strings. We can define an
+ * enum whose variants will hold the different value types, and all the enum variants will be
+ * considered the same type: that of the enum. Then we can create a vector to hold that enum and
+ * so, ultimately, hold different types.
+ *
+ *  enum SpreadsheetCell {
+ *      Int(i32),
+ *      Float(f64),
+ *      Text(String),
+ *  }
+ *
+ *  let row = vec![
+ *      SpreadsheetCell::Int(3),
+ *      SpreadsheetCell::Text(String::from("blue")),
+ *      SpreadsheetCell::Float(10,12),
+ *  ];
+ * Rust needs to know what types will be in the vector at the compile time so it knows exactly how
+ * much memory on the heap will be needed to store each element. We must also be explicit about
+ * what types are allowed in this vector. If Rust allowed a vector to hold any type, there would be
+ * a chance that one or more of the types would cause errors with the operations performed on the
+ * elements of the vector. Using an enum plus a match expression means that Rust will ensure at
+ * compile time that every possible case is handled.
+ *
+ * If you don't know the exhaustive set of types a program will get at runtime to store in a
+ * vector, the enum technique won't work. Instead, you can use a trait object.
+ *
+ * Dropping a Vector Drops Its Elements
+ *
+ * Like any other struct, a vector is freed when it goes out of scope.
+ *
+ *  {
+ *      let v = vec![1, 2, 3, 4];
+ *
+ *      --do stuff with v--
+ *  } // <- v goes out of scope and is freed here
+ * When the vector gets dropped, all of its contents are also dropped, meaning the integers it
+ * holds will be cleaned up. The borrow checker ensures that any references to contents of a vector
+ * are only used while the vector itself is valid.
  */
