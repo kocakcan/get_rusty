@@ -4,7 +4,7 @@
 * Slices let you reference a contiguous sequence of elements in a collection rather than the whole
 * collection. A slice is a kind of reference, so it is a non-owning pointer.
 *
-* Write a function that takes a string of words separaterd by spaces and returns the first word it
+* Write a function that takes a string of words separated by spaces and returns the first word it
 * finds in that string. If the function doesn't find a space in the string, the whole string must
 * be one word, so the entire string should be returned. Without slices, we might write the
 * signature of the function like this:
@@ -31,7 +31,7 @@
 * Next, we create an iterator over the array of bytes using the iter method:
 *
 *   for (i, &item) in bytes.iter().enumerate() {
-* iter is a mmethod that returns each element in a collection and that enumerate wraps the result
+* iter is a method that returns each element in a collection and that enumerate wraps the result
 * of iter and returns each element as part of a tuple instead. The first element of the tuple
 * returned from enumerate is the index, and the second element is a reference to the element. This
 * is a bit more convenient than calculating the index ourselves.
@@ -109,7 +109,7 @@
 *
 *   fn second_word(s: &String) -> (usize, usize) {
 * Now we're tracking a starting and an ending index, and we have even more values that were
-* calculate from data in a particular state but aren't tied to that state at all. We have three
+* calculated from data in a particular state but aren't tied to that state at all. We have three
 * unrelated variables floating around that need to be kept in sync.
 *
 * Luckily, Rust has a solution to this problem: string slices.
@@ -138,23 +138,23 @@
 *   fn main() {
 *       let mut s = String::from("hello");
 *
-*   -> s        | RWO
+*       -> s        | RWO
 *
 *       let hello: &str = &s[0..5];
 *
-*   -> s        | R
-*   -> hello    | RO
-*   -> *hello   | R
+*       -> s        | R
+*       -> hello    | RO
+*       -> *hello   | R
 *
 *       println!("{hello}");    -> requires R
 *
-*   -> s        | RWO
-*   -> hello    | No permissions (goes out of scope)
-*   -> *hello   | No permissions (goes out of scope)
+*       -> s        | RWO
+*       -> hello    | No permissions (goes out of scope)
+*       -> *hello   | No permissions (goes out of scope)
 *
-*   s.push_str(" world");       -> requires RW
+*       s.push_str(" world");       -> requires RW
 *
-*   -> s        | No permissions (goes out of scope)
+*       -> s        | No permissions (goes out of scope)
 *   }
 *
 * Range syntax
@@ -202,7 +202,7 @@
 * value is made up of a reference to the starting point of the slice and the number of elements in
 * the slice.
 *
-* Returning a slice would alsow work for a second_word function:
+* Returning a slice would also work for a second_word function:
 *
 *   fn second_word(s: &String) -> &str {
 * We now have a straightforward API that's harder to mess up, because the compiler will ensure the
