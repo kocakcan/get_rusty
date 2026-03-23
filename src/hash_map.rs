@@ -31,6 +31,42 @@
  * Just like vectors, hash maps store their data on the heap. This HashMap has keys of type String
  * and values of type i32. Like vectors, hash maps are homogenous: all of the keys must have the
  * same type, and all of the values must have the same type.
+ *
+ * Accessing Values in a Hash Map
+ *
+ * We can get a value out of the hash map by providing its key to the get method, as shown below.
+ *
+ *  use std::collections::HashMap;
+ *
+ *  let mut scores = HashMap::new();
+ *
+ *  scores.insert(String::from("Blue"), 10);
+ *  scores.insert(String::from("Yellow"), 50);
+ *
+ *  let team_name = String::from("Blue");
+ *  let score = scores.get(&team_name).copied().unwrapped_or(0);
+ * Here, score will have the value that's associated with the Blue team, and the result will be 10.
+ * The get method returns an Option<&T>; if there's no value for that key in the hash map, get will
+ * return None. This program handles the Option by calling copied to get an Option<i32> rather than
+ * Option<&i32>, then unwrap_or to set score to zero if zero doesn't have an entry for the key.
+ *
+ * We can iterate over each key-value pair in a hash map in a similar manner as we do with vectors,
+ * using a for loop:
+ *
+ *  use std::collections:HashMap;
+ *
+ *  let mut scores = HashMap::new();
+ *
+ *  scores.insert(String::from("Blue"), 10);
+ *  scores.insert(String::from("Yellow"), 50);
+ *
+ *  for (key, value) in &scores {
+ *      println!("{key}: {value}");
+ *  }
+ * This code will print each pair in an arbitrary order:
+ *
+ *  Yellow: 50
+ *  Blue: 10
  */
 use std::collections::HashMap;
 
@@ -41,4 +77,13 @@ fn main() {
     scores.insert(String::from("Yellow"), 50);
 
     println!("{:?}", scores);
+
+    let team_name = String::from("Blue");
+    let score = scores.get(&team_name).copied().unwrap_or(0);
+
+    println!("score: {score}");
+
+    for (key, value) in &scores {
+        println!("{key}: {value}");
+    }
 }
