@@ -67,6 +67,28 @@
  *
  *  Yellow: 50
  *  Blue: 10
+ *
+ * Hash Maps and Ownership
+ *
+ * For types that implement the Copy trait, like i32, the values are copied into the hash map. For
+ * owned values like String, the values will be moved and the hash map will be the owner of those
+ * values, as shown below.
+ *
+ *  use std::collections::HashMap;
+ *
+ *  let field_name = String::from("Favourite color");
+ *  let field_value = String::from("Blue");
+ *
+ *  let mut map = HashMap::new();
+ *  map.insert(field_name, field_value);
+ *  -> field_name and field_value are invalid at this point, try using them and
+ *  -> see what compiler error you get!
+ * We aren't able to use the variable field_name and field_value after they've been moved into the
+ * hash map with the call to insert.
+ *
+ * If we insert references to values into the hash map, the values won't be moved into the hash
+ * map. The values that the references point to must be valid for at least as long as the hash map
+ * is valid.
  */
 use std::collections::HashMap;
 
@@ -86,4 +108,17 @@ fn main() {
     for (key, value) in &scores {
         println!("{key}: {value}");
     }
+
+    let new_team = String::from("Yellow");
+    let new_score = 90;
+
+    scores.insert(new_team, new_score);
+
+    // new_score can be used after being inserted to the hash map as
+    // it implements the Copy trait
+    println!("New score: {new_score}");
+
+    // but new_team is of type String which doesn't implement Copy trait
+    // so it will end up being moved to the hash map and can't be used after that.
+    // println!("New team: {new_team}");
 }
