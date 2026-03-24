@@ -120,5 +120,5 @@ fn main() {
 
     // but new_team is of type String which doesn't implement Copy trait
     // so it will end up being moved to the hash map and can't be used after that.
-    println!("New team: {new_team}");
+    // println!("New team: {new_team}");
 }
