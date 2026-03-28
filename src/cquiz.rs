@@ -13,11 +13,17 @@
 * the user retrieve a list of all people in a department or all people in the company by
 * department, sorted alphabetically.
 */
-use std::collections::HashMap;
-
+fn median(v: &mut Vec<i32>) -> i32 {
+    let len = v.len();
+    if len % 2 == 0 {
+        (v[len / 2] + v[(len / 2) - 1]) / 2
+    } else {
+        v[len / 2]
+    }
+}
 fn main() {
     let mut v: Vec<i32> = vec![1, 2, 3, 4, 10, -5, 9, 2];
     v.sort();
-
-    let mut map = HashMap::new();
+    println!("{v:?}");
+    println!("Median: {}", median(&mut v));
 }
