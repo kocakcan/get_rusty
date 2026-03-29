@@ -55,17 +55,17 @@ fn main() {
     println!("Mode: {:?}", mode);
     // println!("{map:?}");
 
-    let mut input = String::from("Artorias");
-    // if let Some(c) = input.chars().nth(0) {
-    //     println!("First char: {c}");
-    // }
-
-    // Case #1: String starts with a vowel
-    let result = match input.chars().nth(0) {
-        Some('A') | Some('a') | Some('E') | Some('e') | Some('I') | Some('i') | Some('O')
-        | Some('o') | Some('U') | Some('u') => input.push_str("-hay"),
-        _ => todo!(),
+    let input = String::from("Ciaran");
+    let first = input.chars().next().unwrap();
+    let result = match first {
+        'a' | 'e' | 'i' | 'o' | 'u' | 'A' | 'E' | 'I' | 'O' | 'U' => {
+            format!("{input}-hay")
+        }
+        c => {
+            let rest = &input[c.len_utf8()..];
+            format!("{rest}-{c}ay")
+        }
     };
 
-    println!("{input}");
+    println!("{result}");
 }
