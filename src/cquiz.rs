@@ -15,12 +15,15 @@
 */
 use std::collections::HashMap;
 
-fn median(v: &mut [i32]) -> i32 {
+/// Return the median of the slice.
+/// NOTE: Assumes that the slice is sorted.
+fn median(v: &[i32]) -> i32 {
     let len = v.len();
-    if len % 2 == 0 {
-        (v[len / 2] + v[(len / 2) - 1]) / 2
-    } else {
-        v[len / 2]
+    match len {
+        0 => 0,
+        1 => v[0],
+        _ if len % 2 == 0 => (v[len / 2] + v[(len / 2) - 1]) / 2,
+        _ => v[len / 2],
     }
 }
 
@@ -64,7 +67,7 @@ fn main() {
         65, 55, 75, 41, 59, 10, 14,
     ];
     v.sort();
-    println!("Median: {}", median(&mut v));
+
     println!("Mode: {:?}", mode(&v));
 
     println!("Result: {}", piglatin(&String::from("Ciaran")));
