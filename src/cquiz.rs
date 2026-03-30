@@ -60,15 +60,18 @@ fn piglatin(text: &str) -> String {
 
 /// Print the employees in a specific department
 /// Nothing is printed if the department does not exist.
-fn printd(c: &HashMap<String, Vec<String>>, d: &str) {
-    match c.get(d) {
-        Some(s) => {
-            for e in s {
-                println!("{s:?} works in {}", d)
-            }
-        }
+fn printd(company: &HashMap<String, Vec<String>>, dept: &str) {
+    match company.get(dept) {
+        Some(e) => println!("{e:?} works in {}", dept),
         _ => (),
     }
+}
+
+fn hire(company: &mut HashMap<String, Vec<String>>, employee: &str, dept: &str) {
+    company
+        .entry(dept.to_string())
+        .or_insert(Vec::new())
+        .push(employee.to_string());
 }
 
 fn main() {
@@ -89,27 +92,10 @@ fn main() {
 
     let mut from_software: HashMap<String, Vec<String>> = HashMap::new();
 
-    from_software.insert(
-        String::from("Vice President"),
-        vec![String::from("Hidetaka Miyazaki")],
-    );
-    from_software.insert(String::from("Development"), vec![String::from("Yuno Ito")]);
-    from_software.insert(
-        String::from("Development"),
-        vec![String::from("Masanori Takeuchi")],
-    );
-    from_software.insert(
-        String::from("Development"),
-        vec![String::from("Yui Tanimura")],
-    );
-    from_software.insert(
-        String::from("Development"),
-        vec![String::from("Kazuhiro Hamatani")],
-    );
-    from_software.insert(
-        String::from("Marketing"),
-        vec![String::from("Yazuhiro Kitao")],
-    );
-
+    hire(&mut from_software, "Yuno Ito", "Development");
+    hire(&mut from_software, "Masanori Takeuchi", "Development");
+    hire(&mut from_software, "Yui Tanimura", "Development");
+    hire(&mut from_software, "Kazuhiro Hamatani", "Development");
+    hire(&mut from_software, "Yazuhiro Kitao", "Marketing");
     printd(&from_software, "Development");
 }
