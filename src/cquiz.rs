@@ -58,6 +58,19 @@ fn piglatin(text: &str) -> String {
     }
 }
 
+/// Print the employees in a specific department
+/// Nothing is printed if the department does not exist.
+fn printd(c: &HashMap<String, Vec<String>>, d: &str) {
+    match c.get(d) {
+        Some(s) => {
+            for e in s {
+                println!("{s:?} works in {}", d)
+            }
+        }
+        _ => (),
+    }
+}
+
 fn main() {
     let mut v: Vec<i32> = vec![
         55, 34, 57, 40, 5, 29, 10, 92, 17, 76, 10, 43, 61, 97, 33, 54, 73, 81, 17, 57, 27, 72, 10,
@@ -69,8 +82,34 @@ fn main() {
     v.sort();
 
     println!("Mode: {:?}", mode(&v));
+    println!("Median: {:?}", median(&v));
 
     println!("Result: {}", piglatin(&String::from("Ciaran")));
     println!("Result: {}", piglatin(&String::from("Artorias")));
-    // let mut company: HashMap<String, Vec<String>> = HashMap::new();
+
+    let mut from_software: HashMap<String, Vec<String>> = HashMap::new();
+
+    from_software.insert(
+        String::from("Vice President"),
+        vec![String::from("Hidetaka Miyazaki")],
+    );
+    from_software.insert(String::from("Development"), vec![String::from("Yuno Ito")]);
+    from_software.insert(
+        String::from("Development"),
+        vec![String::from("Masanori Takeuchi")],
+    );
+    from_software.insert(
+        String::from("Development"),
+        vec![String::from("Yui Tanimura")],
+    );
+    from_software.insert(
+        String::from("Development"),
+        vec![String::from("Kazuhiro Hamatani")],
+    );
+    from_software.insert(
+        String::from("Marketing"),
+        vec![String::from("Yazuhiro Kitao")],
+    );
+
+    printd(&from_software, "Development");
 }
