@@ -98,4 +98,18 @@ fn main() {
     hire(&mut from_software, "Kazuhiro Hamatani", "Development");
     hire(&mut from_software, "Yazuhiro Kitao", "Marketing");
     printd(&from_software, "Development");
+
+    // input = "Add <name> to <department>";
+    let input = String::from("Add Can Kocak to Development");
+    let words: Vec<&str> = input.trim().split_whitespace().collect();
+    if words.len() == 4
+        && words[0].eq_ignore_ascii_case("Add")
+        && words[2].eq_ignore_ascii_case("to")
+    {
+        let name = words[1];
+        let department = words[3];
+        println!("Name: {} | Department: {}", name, department);
+    } else {
+        println!("Invalid command. Use format: 'Add <Name> to <Department>'");
+    }
 }
