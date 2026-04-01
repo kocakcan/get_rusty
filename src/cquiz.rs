@@ -119,7 +119,6 @@ fn main() {
     // input = "Add <name> to <department>";
     let input = String::from("Add Can Kocak to Development");
     let (name, department) = parse_input(&input);
-
-    println!("Name: {name}");
-    println!("Department: {department}");
+    hire(&mut from_software, &name, &department);
+    printd(&from_software, "Development");
 }
