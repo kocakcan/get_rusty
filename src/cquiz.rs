@@ -74,6 +74,23 @@ fn hire(company: &mut HashMap<String, Vec<String>>, employee: &str, dept: &str) 
         .push(employee.to_string());
 }
 
+/// Splits the input using the whitespace as a delimiter into a vector of string slices then parses
+/// name and department, returning them.
+fn parse_input(input: &String) -> (String, String) {
+    let words: Vec<&str> = input.split_whitespace().collect();
+    let mut to_index = 0;
+    for i in 0..words.len() {
+        if words[i] == "to" {
+            to_index = i;
+            break;
+        }
+    }
+    (
+        words[1..to_index].join(" "),
+        words[to_index + 1..].join(" "),
+    )
+}
+
 fn main() {
     let mut v: Vec<i32> = vec![
         55, 34, 57, 40, 5, 29, 10, 92, 17, 76, 10, 43, 61, 97, 33, 54, 73, 81, 17, 57, 27, 72, 10,
@@ -101,15 +118,8 @@ fn main() {
 
     // input = "Add <name> to <department>";
     let input = String::from("Add Can Kocak to Development");
-    let words: Vec<&str> = input.trim().split_whitespace().collect();
-    if words.len() == 4
-        && words[0].eq_ignore_ascii_case("Add")
-        && words[2].eq_ignore_ascii_case("to")
-    {
-        let name = words[1];
-        let department = words[3];
-        println!("Name: {} | Department: {}", name, department);
-    } else {
-        println!("Invalid command. Use format: 'Add <Name> to <Department>'");
-    }
+    let (name, department) = parse_input(&input);
+
+    println!("Name: {name}");
+    println!("Department: {department}");
 }
