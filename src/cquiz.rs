@@ -121,4 +121,34 @@ fn main() {
     let (name, department) = parse_input(&input);
     hire(&mut from_software, &name, &department);
     printd(&from_software, "Development");
+
+    loop {
+        println!("Welcome to From Software, Inc.");
+        println!("1. Hire a new employee");
+        println!("2. View the current employees of a department");
+        println!("3. Please provide your input (0 to quit)");
+        let mut user_input = String::new();
+
+        std::io::stdin()
+            .read_line(&mut user_input)
+            .expect("Failed to read line");
+        let user_input: u32 = match user_input.trim().parse() {
+            Ok(num) => num,
+            Err(_) => continue,
+        };
+        println!("You've input: {user_input}");
+
+        match user_input {
+            0 => {
+                break;
+            }
+            1 => {
+                println!("So you want to hire someone?");
+            }
+            2 => {
+                println!("So you want to view the current employees?");
+            }
+            _ => (),
+        }
+    }
 }
