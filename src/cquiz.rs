@@ -92,61 +92,71 @@ fn parse_input(input: &String) -> (String, String) {
 }
 
 fn main() {
-    let mut v: Vec<i32> = vec![
-        55, 34, 57, 40, 5, 29, 10, 92, 17, 76, 10, 43, 61, 97, 33, 54, 73, 81, 17, 57, 27, 72, 10,
-        96, 36, 38, 85, 95, 99, 99, 37, 50, 68, 9, 56, 10, 43, 95, 77, 66, 73, 57, 48, 2, 30, 54,
-        84, 30, 84, 88, 70, 78, 99, 12, 56, 14, 8, 81, 3, 18, 5, 39, 54, 42, 45, 51, 37, 49, 83,
-        13, 58, 88, 11, 64, 60, 66, 0, 17, 81, 82, 1, 9, 68, 94, 6, 67, 58, 42, 89, 35, 60, 13, 0,
-        65, 55, 75, 41, 59, 10, 14,
-    ];
-    v.sort();
-
-    println!("Mode: {:?}", mode(&v));
-    println!("Median: {:?}", median(&v));
-
-    println!("Result: {}", piglatin(&String::from("Ciaran")));
-    println!("Result: {}", piglatin(&String::from("Artorias")));
+    // let mut v: Vec<i32> = vec![
+    //     55, 34, 57, 40, 5, 29, 10, 92, 17, 76, 10, 43, 61, 97, 33, 54, 73, 81, 17, 57, 27, 72, 10,
+    //     96, 36, 38, 85, 95, 99, 99, 37, 50, 68, 9, 56, 10, 43, 95, 77, 66, 73, 57, 48, 2, 30, 54,
+    //     84, 30, 84, 88, 70, 78, 99, 12, 56, 14, 8, 81, 3, 18, 5, 39, 54, 42, 45, 51, 37, 49, 83,
+    //     13, 58, 88, 11, 64, 60, 66, 0, 17, 81, 82, 1, 9, 68, 94, 6, 67, 58, 42, 89, 35, 60, 13, 0,
+    //     65, 55, 75, 41, 59, 10, 14,
+    // ];
+    // v.sort();
+    //
+    // println!("Mode: {:?}", mode(&v));
+    // println!("Median: {:?}", median(&v));
+    //
+    // println!("Result: {}", piglatin(&String::from("Ciaran")));
+    // println!("Result: {}", piglatin(&String::from("Artorias")));
 
     let mut from_software: HashMap<String, Vec<String>> = HashMap::new();
 
-    hire(&mut from_software, "Yuno Ito", "Development");
-    hire(&mut from_software, "Masanori Takeuchi", "Development");
-    hire(&mut from_software, "Yui Tanimura", "Development");
-    hire(&mut from_software, "Kazuhiro Hamatani", "Development");
-    hire(&mut from_software, "Yazuhiro Kitao", "Marketing");
-    printd(&from_software, "Development");
+    // hire(&mut from_software, "Yuno Ito", "Development");
+    // hire(&mut from_software, "Masanori Takeuchi", "Development");
+    // hire(&mut from_software, "Yui Tanimura", "Development");
+    // hire(&mut from_software, "Kazuhiro Hamatani", "Development");
+    // hire(&mut from_software, "Yazuhiro Kitao", "Marketing");
+    // printd(&from_software, "Development");
 
     // input = "Add <name> to <department>";
-    let input = String::from("Add Can Kocak to Development");
-    let (name, department) = parse_input(&input);
-    hire(&mut from_software, &name, &department);
-    printd(&from_software, "Development");
+    // let input = String::from("Add Can Kocak to Development");
+    // let (name, department) = parse_input(&input);
+    // hire(&mut from_software, &name, &department);
+    // printd(&from_software, "Development");
 
     loop {
         println!("Welcome to From Software, Inc.");
         println!("1. Hire a new employee");
         println!("2. View the current employees of a department");
         println!("3. Please provide your input (0 to quit)");
-        let mut user_input = String::new();
-
+        let mut input = String::new();
         std::io::stdin()
-            .read_line(&mut user_input)
+            .read_line(&mut input)
             .expect("Failed to read line");
-        let user_input: u32 = match user_input.trim().parse() {
+        let user_input: u32 = match input.trim().parse() {
             Ok(num) => num,
             Err(_) => continue,
         };
-        println!("You've input: {user_input}");
-
         match user_input {
             0 => {
                 break;
             }
             1 => {
-                println!("So you want to hire someone?");
+                println!("Please provide the name and department in the following format");
+                println!("`Add <Name> to <Department>`");
+                let mut user_input = String::new();
+                std::io::stdin()
+                    .read_line(&mut user_input)
+                    .expect("Failed to read line");
+                let (name, department) = parse_input(&user_input);
+                hire(&mut from_software, &name, &department);
             }
             2 => {
-                println!("So you want to view the current employees?");
+                println!("Please provide the deparment name (e.g., Development)");
+                let mut dept_selection = String::new();
+                std::io::stdin()
+                    .read_line(&mut dept_selection)
+                    .expect("Failed to read line");
+                let dept_selection = dept_selection.trim();
+                printd(&from_software, &dept_selection);
             }
             _ => (),
         }
