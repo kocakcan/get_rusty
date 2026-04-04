@@ -226,16 +226,128 @@
 /// match expression. When the file can't be created, a different error message is printed. The
 /// second arm of the outer match stays the same, so the program panics on any error besides the
 /// missing file error.
+///
+/// Alternatives to Using match with Result<T, E>
+///
+/// That's a lot of match! The match expression is very useful but also very much a primitive.
+/// Closures are used with many of the methods defined on Result<T, E>. These methods can be more
+/// concise than using match when handling Result<T, E> values in your code.
+///
+/// For example, here's another way to write the same logic as shown below, this time using closures
+/// and the unwrap_or_else method:
+///
+///     use std::fs::File;
+///     use std::io::ErrorKind;
+///
+///     fn main() {
+///         let greeting_file = File::open("hello.txt").unwrap_or_else(|error| {
+///             if error.kind() == ErrorKind::NotFound {
+///                 File::create("hello.txt").unwrap_or_else(|error| {
+///                     panic!("Problem creating the file: {error:?}");
+///                 })
+///             } else {
+///                 panic!("Problem opening the file: {error:?}");
+///             }
+///         });
+///     }
+/// Although this code has the same behaviour as before, it doesn't contain any match expressions
+/// and is cleaner to read.
+///
+/// File::open returns a Result and not an Option because Result can represent why an operation
+/// failed, and file opening can fail for many reasons.
+///
+/// Shortcuts for Panic on Error: unwrap and except
+///
+/// Using match works well enough, but it can be a bit verbose and doesn't always communicate intent
+/// well. The Result<T, E> type has many helper methods defined on it to do various, more specific
+/// tasks. The unwrap method is a shortcut method implemented just like the match expression we
+/// wrote above. If the Result value is the Ok variant, unwrap will return the value inside the Ok.
+/// If the Result is the Err variant, unwrap will call the panic! macro for us.
+///
+///     use std::fs::File;
+///
+///     fn main() {
+///         let greeting_file = File::open("hello.txt").unwrap();
+///     }
+/// If we run this code without a hello.txt file, we'll see an error message from the panic! call
+/// that the unwrap method makes:
+///
+///     thread 'main' panicked at src/main.rs:4:49
+///     called `Result::unwrap()` or an `Err` value: Os { code: 2, kind: NotFound, message: "No such
+///     file or directory" }
+/// Similarly, the expect method lets us also choose the panic! error message. Using expect instead
+/// of unwrap and providing good error messages can convey your intent and make tracking down the
+/// source of a panic easier. The syntax of expect looks like this:
+///
+///     use std::fs::File;
+///
+///     fn main() {
+///         let greeting_file = File::open("hello.txt").expect("hello.txt should be included in this
+///         project.");
+///     }
+/// We use expect in the same way as unwrap: to return the file handle or call the panic! macro. The
+/// error message used by expect in its call to panic! will be the parameter that we pass to expect,
+/// rather than the default panic! message that unwrap uses. Here's what it looks like:
+///
+///     thread 'main' panicked at src/main.rs:5:10:
+///     hello.txt should be included in this project: Os { code: 2, kind: NotFound, message: "No suh
+///     file or directory" }
+/// In production-quality code, most Rustaceans choose expect rather than unwrap and give more
+/// context about why the operation is expected to always succeed. That way, if your assumptions are
+/// ever proven wrong, you have more information to use in debugging.
+///
+/// Propagating Errors
+///
+/// When a function's implementation calls something that might fail, instead of handling the error
+/// within the function itself, you can return the error to the calling code so that it can decide
+/// what to do. This is known as propagating the error and gives more control to the calling code,
+/// where there might be more information or logic that dictates how the error should be handled
+/// than what you have available in the context of your code.
+///
+/// For example, below shows a function that reads a username from a file. If the file doesn't exist
+/// or can't be read, this function will return those errors to the code that called the function.
+///
+///     use std::fs::File;
+///     use std::io::{self, Read}
+///
+///     fn read_username_from_file() -> Result<String, io::Error> {
+///         let username_file_result = File::open("hello.txt");
+///
+///         let mut username_file = match username_file_result {
+///             Ok(file) => file,
+///             Err(e) => return Err(e),
+///         }
+///         let mut username = String::new();
+///         match username_file.read_to_string(&mut username) {
+///             Ok(_) => Ok(username),
+///             Err(e) => Err(e),
+///         }
+///     }
+/// This function can be written in a much shorte way.
 use std::fs::File;
+use std::io::ErrorKind;
 
 fn main() {
     // panic!("crash and burn");
     // let v = vec![1, 2, 3];
     // v[99];
+    // let greeting_file_result = File::open("hello.txt");
+    //
+    // let greeting_file = match greeting_file_result {
+    //     Ok(file) => file,
+    //     Err(error) => panic!("Problem opening file: {error:?}"),
+    // };
     let greeting_file_result = File::open("hello.txt");
-
     let greeting_file = match greeting_file_result {
         Ok(file) => file,
-        Err(error) => panic!("Problem opening file: {error:?}"),
+        Err(error) => match error.kind() {
+            ErrorKind::NotFound => match File::create("hello.txt") {
+                Ok(fc) => fc,
+                Err(e) => panic!("Problem creating the file: {e:?}"),
+            },
+            _ => {
+                panic!("Problem opening the file: {error:?}");
+            }
+        },
     };
 }
