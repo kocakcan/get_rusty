@@ -377,6 +377,25 @@
 ///         username_file.read_to_string(&mut username)?;
 ///         Ok(username)
 ///     }
+/// The ? placed after a Result value is defined to work in almost the same way as the match
+/// expressions we defined to handle the Result values above. If the value of the Result is an Ok,
+/// the value inside the Ok will get returned from this expression, and the program will continue.
+/// If the value is an Err, the Err will be returned from the whole function as if we had used the
+/// return keyword so the error value gets propagated to the calling code.
+///
+/// There is a difference between what the match expression above does and what the ? operator does:
+/// error values that have the ? operator called on them go through the from from function, defined
+/// in the From trait in the standard library, which is used to convert values from one type into
+/// another. When the ? operator calls the from function, the error type received is converted into
+/// the error type defined in the return type of the current function. This is useful when a
+/// function returns one error type to represent all the ways a function might fail, even if parts
+/// might fail for many different reasons.
+///
+/// For example, we could change the read_username_from_file function above to return a custom error
+/// type named OurError that we define. If we also define impl From<io::Error> for OurError to
+/// construct an instance of OurError from an io::Error, then the ? operator calls in the body of
+/// read_username_from_file will call from and convert the error types without needing to add any
+/// more code to the function.
 use std::fs::File;
 use std::io::ErrorKind;
 
