@@ -104,22 +104,116 @@
 /// Additionally, unlike languages like Java where all objects have a set of core methods like
 /// Object.toString(), there are no core methods in Rust. Without restrictions, a generic type T
 /// has no capabilities: it cannot be printed, cloned, or mutated (although it can be dropped).
+///
+/// In Struct Definitions
+///
+/// We can also define structs to use a generic type parameter in one or more fields using the <>
+/// syntax. Listing 10-6 defines a Point<T> struct to hold x and y coordinate values of any type.
+///
+///     struct Point<T> {
+///         x: T,
+///         y: T,
+///     }
+///
+///     fn main() {
+///         let integer = Point { x: 5, y: 10 };
+///         let float = Point { x: 1.0, y: 4.0 };
+///     }
+///     Listing 10-6: A Point<T> struct that holds x and y values of type T
+/// The syntax for using generics in struct definitions is similar to that used in function
+/// definitions. First we declare the name of the type parameter inside angle brackets just after
+/// the name of the struct. Then we use the generic type in the struct definition where we would
+/// otherwise specify concrete data types.
+///
+/// Note that because we've used only one generic type to define Point<T>, this definition says
+/// that the Point<T> struct is generic over some type T, and the fields x and y are both that same
+/// type, whatever type may be. If we create an instance of a Point<T> that has values of different
+/// types, as in Listing 10-7, our code won't compile.
+///
+///     struct Point<T> {
+///         x: T,
+///         y: T,
+///     }
+///
+///     fn main() {
+///         let wont_work = Point { x: 5, y: 4. 0 };
+///     }
+///     Listing 10-7: The fields x and y must be the same type because both have the same generic
+///     data type T.
+/// In this example, when we assign the integer value 5 to x, we let the compiler know that the
+/// generic type T will be an integer for this instance of Point<T>. Then we specify 4.0 for y
+/// which we've defined to have the same type as x, we'll get a type mismatch error like this:
+///
+///     mismatched type
+/// To define a Point struct where x and y are both generics but could have different types, we can
+/// use multiple generic type parameters. For example, Listing 10-8, we change the definition of
+/// Point to be generic over types T and U where x is of type T and y is of type U.
+///
+///     struct Point<T, U> {
+///         x: T,
+///         y: U,
+///     }
+///
+///     fn main() {
+///         let both_integer = Point { x: 5, y: 10};
+///         let both_float = Point { x: 1.0, y: 4,0};
+///         let integer_and_float = Point { x: 5, y: 4.0 };
+///     }
+///     Listing 10-8: A Point<T, U> generic over two types so that x and y can be values of
+///     different types
+///
+/// In Enum Definitions
+///
+/// As we did with structs, we can define enums to hold generic data types in their variants. Let's
+/// take another look at the Option<T> enum that the standard library provides.
+///
+///     enum Option<T> {
+///         Some(T),
+///         None,
+///     }
+/// This definition should now make more sense to you. As you can see, the Option<T> enum is
+/// generic over type T and has two variants: Some, which holds one value of type T, and a None
+/// varian that doesn't hold any value. By using the Option<T> enum, we can express the abstract
+/// concept of an optional value, and because Option<T> is generic, we can use this abstraction no
+/// matter what the type of the optional value is.
+///
+/// Enums can use multiple generic types as well. The definition of the Result enum is one example:
+///
+///     enum Result<T, E> {
+///         Ok(T),
+///         Err(E),
+///     }
+/// The Result enum is generic over two types, T and E, and has two variants: Ok, which holds a
+/// value of type T, and Err, which holds a value of type E. This definition makes it convenient to
+/// use the Result enum anywhere we have an operation that might succeed (return a value of some
+/// type T) or fail (return an error of some type E).
+///
+/// When you recognize situations in your code with multiple struct or enum definitions that differ
+/// only in the types of the values they hold, you can avoid duplication by using generic types instead.
 
-fn largest<T>(list: &[T]) -> &T {
-    let mut largest = &list[0];
-    for item in list {
-        if item > largest {
-            largest = item;
-        }
-    }
-    largest
+struct Point<T, U> {
+    x: T,
+    y: U,
 }
 
+// fn largest<T>(list: &[T]) -> &T {
+//     let mut largest = &list[0];
+//     for item in list {
+//         if item > largest {
+//             largest = item;
+//         }
+//     }
+//     largest
+// }
+
 fn main() {
-    let number_list = vec![34, 50, 25, 100, 65];
-    let result = largest(&number_list);
-    println!("The largest number is {result}");
-    let char_list = vec!['y', 'm', 'a', 'q'];
-    let result = largest(&char_list);
-    println!("The largest char is {result}");
+    // let number_list = vec![34, 50, 25, 100, 65];
+    // let result = largest(&number_list);
+    // println!("The largest number is {result}");
+    // let char_list = vec!['y', 'm', 'a', 'q'];
+    // let result = largest(&char_list);
+    // println!("The largest char is {result}");
+    let both_integer = Point { x: 19, y: 31 };
+    let both_float = Point { x: 3.14, y: 2.71 };
+    let integer_and_float = Point { x: 7, y: 420.69 };
 }
