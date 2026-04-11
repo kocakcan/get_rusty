@@ -207,6 +207,51 @@
 /// of that same method.
 ///
 /// Traits as Parameters
+///
+/// Now that you know how to define and implement traits, we can explore how to use traits to define
+/// functions that accept many different types. We'll use the Summary trait we implemented on the
+/// NewsArticle and SocialPost types in Listing 10-13 to define a notify function that calls the
+/// summarize method on its item parameter, which is of some type that implements the Summary trait.
+/// To do this, we use the impl Trait syntax, like this:
+///
+///     pub fn notify(item: &impl Summary) {
+///         println!("Breaking news! {}", item.summarize());
+///     }
+/// Instead of a concrete type for the item parameter, we specify the impl keyword and the trait
+/// name. This parameter accepts any type that implements the specified trait. In the body of
+/// notify, we can call any methods on item that come from the Summary trait, such as summarize. We
+/// can call notify and pass in any instance of NewsArticle or SocialPost. Code that calls the
+/// function with any other type, such as String or an i32, won't compile because those types don't
+/// implement Summary.
+///
+/// Trait Bound Syntax
+///
+/// The impl Trait syntax works for straightforward cases but is actually syntax sugar for a longer
+/// form known as a trait bound; it looks like this:
+///
+///     pub fn notify<T: Summary>(item: &T) {
+///         println!("Breaking news! {}", item.summarize());
+///     }
+/// This longer form is equivalent to the example in the previous section but is more verbose. We
+/// place trait bounds with the declaration of the generic type paramter after a colon and inside
+/// angle brackets.
+///
+/// The impl Trait syntax is convenient and makes for more concise code in simple cases, while the
+/// fuller trait bound syntax can express more complexity in other cases. For example, we can have
+/// two parameters that implement Summary. Doing so with the impl Trait syntax looks like this:
+///
+///     pub fn notify(item1: &impl Summary, item2: &impl Summary) {
+/// Using impl Trait is appropriate if we want this function to allow item1 and item2 to have
+/// different types (as long as both types implement Summary). If we want to force both parameters
+/// to have the same type, however, we must use a trait bound, like this:
+///
+///     pub fn notify<T: Summary>(item1: &T, item2: &T) {
+/// The generic type T specified as the type of the item1 and item2 parameters constrains the
+/// function such that the concrete type of the value passed as an argument for item1 and item2 must
+/// be the same.
+///
+/// Specifyin Multiple Trait Bounds with the + Syntax
+///
 pub trait Summary {
     fn summarize_author(&self) -> String;
 
@@ -245,6 +290,27 @@ impl Summary for SocialPost {
     }
 }
 
+// Concise version
+// pub fn notify(item: &impl Summary) {
+//     println!("Breaking news! {}", item.summarize());
+// }
+
+// Verbose version (better for complex cases)
+// pub fn notify<T: Summary>(item: &T) {
+//     println!("Breaking news! {}", item.summarize());
+// }
+
+// If two parameters should be of the same type
+// pub fn notify<T: Summary>(item1: &T, item2: &T) {
+//     println!("First: {}", item1.summarize());
+//     println!("Second: {}", item2.summarize());
+// }
+
+pub fn notify(item1: &impl Summary, item2: &impl Summary) {
+    println!("First: {}", item1.summarize());
+    println!("Second: {}", item2.summarize());
+}
+
 fn main() {
     let post = SocialPost {
         username: String::from("galatasaray"),
@@ -253,5 +319,15 @@ fn main() {
         repost: false,
     };
 
+    let news = NewsArticle {
+        headline: String::from("Playstation 6 rumored to be released in 2027"),
+        author: String::from("Can Kocak"),
+        location: String::from("Helsinki, Finland"),
+        content: String::from(
+            "Due to RAM shortages PS6 will be released in late 2027 according to an infamous insider.",
+        ),
+    };
+
     println!("1 new post: {}", post.summarize());
+    notify(&post, &news);
 }
