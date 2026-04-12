@@ -250,8 +250,37 @@
 /// function such that the concrete type of the value passed as an argument for item1 and item2 must
 /// be the same.
 ///
-/// Specifyin Multiple Trait Bounds with the + Syntax
+/// Specifying Multiple Trait Bounds with the + Syntax
 ///
+/// We can also specify more than one trait bound. Say we wanted notify to use display formatting as
+/// well as summarize on item: we specify in the notify definition that item must implement both
+/// Display and Summary. We can do so using the + syntax:
+///
+///     pub fn notify(item: &(impl Summary + Display)) {
+/// The + syntax is also valid with trait bounds on generic types:
+///
+///     pub fn notify<T: Summary + Display>(item: &T) {
+/// With the two trait bounds specified, the body of notify can call summarize and use {} to format
+/// item.
+///
+/// Clearer Trait Bounds with where Clauses
+///
+/// Using too many trait bounds has its downsides. Each generic has its own trait bounds, so
+/// functions with multiple generic type parameters can contain lots of trait bound information
+/// between the function's name and its parameter list, making the function signature hard to read.
+/// For this reason, Rust has alternate syntax for specifying trait bounds inside a where clause
+/// after the function signature. So, instead of writing this:
+///
+///     fn some_function<T: Display + Clone, U: Clone + Debug>(t: &T, u: &U) -> i32 {
+/// we can user a where clause, like this:
+///
+///     fn some_function<T, U>(t: &T, u: &U) -> i32
+///     where
+///         T: Display + Clone,
+///         U: Clone + Debug,
+///     {
+/// This function's signature is less cluttered: the function name, parameter list, and return type
+/// are close together, similar to a function without lots of trait bounds.
 pub trait Summary {
     fn summarize_author(&self) -> String;
 
@@ -300,7 +329,7 @@ impl Summary for SocialPost {
 //     println!("Breaking news! {}", item.summarize());
 // }
 
-// If two parameters should be of the same type
+// If two parameters must be of the same type
 // pub fn notify<T: Summary>(item1: &T, item2: &T) {
 //     println!("First: {}", item1.summarize());
 //     println!("Second: {}", item2.summarize());
@@ -310,6 +339,18 @@ pub fn notify(item1: &impl Summary, item2: &impl Summary) {
     println!("First: {}", item1.summarize());
     println!("Second: {}", item2.summarize());
 }
+
+// fn some_function<T: Display + Clone, U: Clone + Debug>(t: &T, u: &U) -> i32 {
+//     5
+// }
+
+// fn some_function<T, U>(t: &T, u: &U) -> i32
+// where
+//     T: Display + Clone,
+//     U: Clone + Debug,
+// {
+//     unimplemented!()
+// }
 
 fn main() {
     let post = SocialPost {
