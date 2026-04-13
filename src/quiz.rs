@@ -36,3 +36,16 @@
 //     give_and_take(&v, 4);
 //     println!("{}", n);
 // }
+
+/// We only know that this type implements Display trait and we also know that it's not a String
+/// which has the push_str method. Therefore we cannot call s2.push_str(..). If the return type of
+/// displayable was -> T, then this program would compile.
+// use std::fmt::Display;
+// fn displayable<T: Display>(t: T) -> impl Display { t }
+//
+// fn main() {
+//     let s = String::from("hello");
+//     let mut s2 = displayable(s);
+//     s2.push_str(" world");
+//     println!("{s2}");
+// }
