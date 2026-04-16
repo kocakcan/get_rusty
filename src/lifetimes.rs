@@ -84,3 +84,72 @@
 ///
 /// Here, x has the lifetime 'b, which in this case is larger than 'a. This means r can reference x
 /// because Rust knows that the reference in r will always be valid while x is valid.
+///
+/// Generic Lifetimes in Functions
+///
+/// We'll write a function that returns the longer of two string slices. This function will take
+/// two string slices and return a single string slice. After we've implemented the longest
+/// function, the code in Listing 10-19 should print The longest string is abcd.
+///
+///     fn main() {
+///         let string1 = String::from("abcd");
+///         let string2 = "xyz";
+///
+///         let result = longest(string.as_str(), string2);
+///         println!("The longest string is {result}");
+///     }
+///     Listing 10-19: A main function that calls the longest function to find the longer of two
+///     string slices
+/// Note that we want the function to take string slices, which are references, rather than
+/// strings, because we don't want the longest function to take ownership of its parameters.
+///
+/// If we try to implement the longest function as shown in Listing 10-20, it won't compile.
+///
+///     fn longest(x: &str, y: &str) -> &str {
+///         if x.len() > y.len() { x } else { y }
+///     }
+///     Listing 10-20: An implementation of the longest function that returns the longer of two
+///     string slices but does not yet compile
+///
+///     error[E0106]: missing lifetime specifier
+/// The help text reveals that the return type needs a generic lifetime parameter on it because
+/// Rust can't tell whether the reference being returned refers to x or y. Actually, we don't know
+/// either, because the if block in the body of this function returns a reference to x and the else
+/// block returns a reference to y!
+///
+/// When we're defining this function, we don't know the, concrete values that will be passed into
+/// this function, so we don't know whether the if case or the else case will execute. We also
+/// don't know the concrete lifetimes of the references that will be passed in, so we can't look at
+/// the scopes as we did in Listings 10-177 and 10-18 to determine whether the reference we return
+/// will always be valid. The borrow checker can't determine this either, because it doesn't know
+/// the lifetimes of x and y relate to the lifetime of the return value. To fix this error, we'll
+/// add generic lifetime parameters that define the relationship between the references so the
+/// borrow checker can perform its analysis.
+///
+/// Lifetime Annotation Syntax
+///
+/// Lifetime annotations don't change how long any of the references live. Rather, they describe
+/// the relationships of the lifetimes of multiple references to each other without affecting the
+/// lifetimes. Just as functions can accept any type when the signature specifies a generic type
+/// parameter, functions can accept references with any lifetime by specifying a generic lifetime parameter. 
+///
+/// Lifetime annotations have a slightly unusual syntax: The names of lifetime parameters must
+/// start with an apostrophe (') and are usually all lowercase and very short, like generic types.
+/// Most people use the name 'a for the first lifetime annotation. We place lifetime parameter
+/// annotations after the & of a reference, using a space to separate the annotation from the
+/// reference's type.
+///
+/// Here are some examples--a reference to an i32 without a lifetime parameter, a reference to an
+/// i32 that has a lifetime parameter named 'a, and a mutable reference to an i32 that also has the
+/// lifetime 'a:
+///
+///     &i32        // a reference
+///     &'a i32     // a reference with an explicit lifetime
+///     &'a mut i32 // a mutable reference with an explicit lifetime
+/// One lifetime annotation by itself doesn't have much meaning, because the annotations are meant
+/// to tell Rust how generic lifetime parameters of multiple references relate to each other. Let's
+/// examine how the lifetime annotations relate to each other in the context of the longest function.
+///
+/// In Function Signatures
+///
+///
