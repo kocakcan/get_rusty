@@ -152,4 +152,30 @@
 ///
 /// In Function Signatures
 ///
+/// To use lifetime annotations in function signatures, we need to declare the generic lifetime
+/// parameters inside angle brackets between the function name and the parameter list, just as we
+/// did with generic type parameters.
 ///
+/// We want the signature to express the following constraint: The returned reference will be valid
+/// as long as both of the parameters are valid. This is the relationship between lifetimes of the
+/// parameters and the return value. We'll name the lifetime 'a and then add it to each reference,
+/// as shown in Listing 10-21.
+///
+///     fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+///         if x.len() > y.len() { x } else { y }
+///     }
+///     Listing 10-21: The longest function definition specifying that all the references in the
+///     signature must have the same lifetime 'a.
+/// This code should compile and produce tthe result we want when we use it with the main function
+/// in Listing 10-19.
+fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() > y.len() { x } else { y }
+}
+
+fn main() {
+    let string1 = String::from("abcd");
+    let string2 = "xyz";
+
+    let result = longest(string1.as_str(), string2);
+    println!("The longest string is {result}");
+}
