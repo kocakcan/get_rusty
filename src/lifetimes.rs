@@ -131,7 +131,7 @@
 /// Lifetime annotations don't change how long any of the references live. Rather, they describe
 /// the relationships of the lifetimes of multiple references to each other without affecting the
 /// lifetimes. Just as functions can accept any type when the signature specifies a generic type
-/// parameter, functions can accept references with any lifetime by specifying a generic lifetime parameter. 
+/// parameter, functions can accept references with any lifetime by specifying a generic lifetime parameter.
 ///
 /// Lifetime annotations have a slightly unusual syntax: The names of lifetime parameters must
 /// start with an apostrophe (') and are usually all lowercase and very short, like generic types.
@@ -287,6 +287,35 @@
 /// values of functions. Once they're connected, Rust has enough information to allow memory-safe
 /// operations and disallow operations that would create dangling pointers or otherwise violate
 /// memory safety.
+///
+/// Lifetime Annotations in Struct Definitions
+///
+/// So far, the structs we've defined all hold owned types. We can define structs to hold
+/// references, but in that case we would need to add a lifetime annotation on every reference in
+/// the struct's definition. Listing 10-24 has a struct named ImportantExcerpt that holds a string slice.
+///
+///     struct ImportantExcerpt<'a> {
+///         part: &'a str,
+///     }
+///
+///     fn main() {
+///         let novel = String::from("Call me Ishmael. Some years ago...");
+///         let first_sentence = nove.split('').next().unwrap();
+///         let i = ImportantExcerpt {
+///             part: first_sentence,
+///         };
+///     }
+///     Listing 10-24: A struct that holds a reference, requiring a lifetime annotation
+/// This struct has the single field part that holds a string slice, which is a reference. As with
+/// generic data types, we declare the name of the generic lifetime parameter inside angle brackets
+/// after the name of the struct so we can use the lifetime parameter in the body of the struct
+/// definition. This annotation means an instance of ImportantExcerpt can't outlive the reference it
+/// holds in its part field.
+///
+/// The main function here creates an instance of the ImportantExcerpt struct that holds a reference
+/// to the first sentence of the String owned by the variable novel. The data in novel exists before
+/// the ImportantExcerpt instance is created. In addition, novel doesn't go out of scope until after
+/// the ImportantExcerpt goes out of scope, so the reference in the ImportantExcerpt instance is valid.
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
     if x.len() > y.len() { x } else { y }
 }
@@ -295,7 +324,7 @@ enum AttackType {
     Light,
     Normal,
     Heavy,
-    ChargedHeavy
+    ChargedHeavy,
 }
 
 fn get_damage(at: &AttackType) -> u32 {
