@@ -72,15 +72,15 @@
 /// Listing 10-18 fixes the code so it doesn't have a dangling reference and it compiles without
 /// any errors.
 ///
-/// fn main() {
-///    let x = 5;             // ----------+-- 'b
-///                           //           |
-///    let r = &x;            // --+-- 'a  |
-///                           //   |       |
-///    println!("r: {r}");    //   |       |
-///                           // --+       |
-/// }                         // ----------+
-/// Listing 10-18: A valid reference because the data has a longer lifetime than the reference
+///     fn main() {
+///         let x = 5;              // ----------+-- 'b
+///                                 //           |
+///         let r = &x;             // --+-- 'a  |
+///                                 //   |       |
+///         println!("r: {r}");     //   |       |
+///                                 // --+       |
+///     }                           // ----------+
+///     Listing 10-18: A valid reference because the data has a longer lifetime than the reference
 ///
 /// Here, x has the lifetime 'b, which in this case is larger than 'a. This means r can reference x
 /// because Rust knows that the reference in r will always be valid while x is valid.
@@ -166,7 +166,7 @@
 ///     }
 ///     Listing 10-21: The longest function definition specifying that all the references in the
 ///     signature must have the same lifetime 'a.
-/// This code should compile and produce tthe result we want when we use it with the main function
+/// This code should compile and produce the result we want when we use it with the main function
 /// in Listing 10-19.
 ///
 /// The function signature now tells Rust that for some lifetime 'a, the function takes two
@@ -262,7 +262,7 @@
 /// the parameter y, because the lifetime of y does not have any relationship with the lifetime of
 /// x or the return value.
 ///
-/// When returning a reference froma function, the lifetime parameter for the return type needs to
+/// When returning a reference from a function, the lifetime parameter for the return type needs to
 /// match the lifetime parameter for one of the parameters. If the reference returned does not
 /// refer to one of the parameters, it must refer to a value created within this function. However,
 /// this would be a dangling reference because the value will go out of scope at the end of the
@@ -316,6 +316,114 @@
 /// to the first sentence of the String owned by the variable novel. The data in novel exists before
 /// the ImportantExcerpt instance is created. In addition, novel doesn't go out of scope until after
 /// the ImportantExcerpt goes out of scope, so the reference in the ImportantExcerpt instance is valid.
+///
+/// Lifetime Elision
+///
+/// You've learned that every reference has a lifetime and that you need to specify lifetime
+/// parameters for functions or structs that use references. However, we had a function in Listing
+/// 4-9, shown again in Listing 10-25, that compiled without lifetime annotations.
+///
+///     fn first_word(s: &str) -> &str {
+///         let bytes = s.as_bytes();
+///
+///         for (i, &item) in bytes.iter().enumerate() {
+///             if item == b' ' {
+///                 return &s[0..i];
+///             }
+///         }
+///         &s[..]
+///     }
+///     Listing 10-25: A function we defined in Listing 4-9 that compiled without lifetime
+///     annotations, even though the parameter and return type are references
+/// The patterns programmed into Rust's analysis of references are called the lifetime elision
+/// rules. These aren't rules for programmers to follow; they're set of particular cases that the
+/// compiler will consider, and if your code fits these cases, you don't need to write the
+/// lifetimes explicitly.
+///
+/// Lifetimes on function or method parameters are called input lifetimes, and lifetimes on return
+/// values are called output lifetimes.
+///
+/// The compiler uses three rules to figure out the lifetimes of the references when there aren't
+/// explicit annotations. The first rule applies to input lifetimes, and the second and third rules
+/// apply to output lifetimes. If the compiler gets to the end of the three rules and there are
+/// still references for which it can't figure out lifetimes, the compiler will stop with an error.
+/// There rules apply to fn definitions as well as impl blocks.
+///
+/// The first rule is that the compiler assigns a different lifetime parameter to each lifetime in
+/// each input type. References like &'_ i32 need a lifetime parameter, and structures like
+/// ImportantExcerpt<'_> need a lifetime parameter. For example:
+///
+///     - The function fn foo(x: &i32) would get one lifetime parameter and become fn foo<'a>(x:
+///     &'a i32).
+///     - The function fn foo(x: &i32, y: &i32) would get two lifetime parameters and become fn
+///     foo<'a, 'b>(x: &'a i32, y: &'b i32).
+///     - The function fn foo(x: &ImportantExcerpt) would get two lifetime parameters and become fn
+///     foo<'a, 'b>(x: &'a ImportantExcerpt<'b>).
+///
+/// The second rule is that, if there is exactly one input lifetime parameter, that lifetime is
+/// assigned to all output lifetime parameters: fn foo<'a>(x: &'a i32) -> &'a i32.
+///
+/// The third rule is that, if there are multiple lifetime parameters, but one of them is &self or
+/// &mut self because this is a method, the lifetime of self is assigned to all output lifetime
+/// parameters. This third rule makes methods much nicer to read and write because fewer symbols
+/// are necessary.
+///
+/// Let's pretend we're the compiler. We'll apply these rules to figure out the lifetimes of the
+/// references in the signature of the first_word function in Listing 10-25. The signature starts
+/// without any lifetime associated with the references:
+///
+///     fn first_word(s: &str) -> &str {
+/// Then the compiler applies the first rule, which specifies that each parameter gets its own
+/// lifetime. We'll call it 'a as usual, so now the signature is this:
+///
+///     fn first_word<'a>(s: &'a str) -> &str {
+/// The second rule applies because there is exactly one input lifetime. The second rule specifies
+/// that the lifetime of the one input parameter gets assigned to the output lifetime, so the
+/// signature is now this:
+///
+///     fn first_word<'a>(s: &'a str) -> &'a str {
+/// Now all the references in this function signature have lifetimes, and the compiler can continue
+/// its analysis without needing the programmer to annotate the lifetimes in this function signature.
+///
+/// Let's look at another example, this time using the longest function that had no lifetime
+/// parameters when we started working with it in Listing 10-20:
+///
+///     fn longest(x: &str, y: &str) -> &str {
+/// Let's apply the first rule: each parameter gets its own lifetime. This time we have two
+/// parameters instead of one, so we have two lifetimes:
+///
+///     fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str {
+/// You can see that the second rule doesn't apply because there is more than one input lifetime.
+/// The third rule doesn't apply either, because longest is a function rather than a method, so
+/// none of the parameters are self. After working through all three rules, we still haven't
+/// figured out what the return type's lifetime is. This is why we got an error trying to compile
+/// the code in Listing 10-20: the compiler worked through the lifetime elision rules but still
+/// couldn't figure out all the lifetimes of the reference in the signature.
+///
+/// Because the third rule really only applies in method signatures, we'll look at lifetimes in
+/// that context next to see why the third rule means we don't have to annotate lifetimes in method
+/// signatures very often.
+///
+/// Lifetime Annotations in Method Definitions
+///
+/// When we implement methods on a struct with lifetimes, we use the same syntax as that of generic
+/// type parameters, as shown in Listing 10-11. Where we declare and use the lifetime parameters
+/// depends on whether they're related to the struct fields or the method parameters and return values.
+///
+/// Lifetime names for struct fields always need to be declared after the impl keyword and then
+/// used after the struct's name because those lifetimes are part of the struct's type.
+///
+/// In method signatures inside the impl block, references might be tied to the lifetime of
+/// references in the struct's fields, or they might be independent. In addition, the lifetime
+/// elision rules often make it so that lifetime annotations aren't necessary in method signatures.
+/// Let's look at some examples using the struct named ImportantExcerpt that we defined in Listing
+/// 10-24.
+///
+/// First 
+struct ImportantExcerpt<'a> {
+    part: &'a str,
+}
+
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
     if x.len() > y.len() { x } else { y }
 }
@@ -339,6 +447,12 @@ fn get_damage(at: &AttackType) -> u32 {
 fn main() {
     let string1 = String::from("abcd");
     let string2 = "xyz";
+    let novel = String::from("Call me Ishmael. Some years ago...");
+    let first_sentence = novel.split('.').next().unwrap();
+    let i = ImportantExcerpt {
+        part: first_sentence,
+    };
+    println!("First sentence: {first_sentence}");
 
     let result = longest(string1.as_str(), string2);
     let first_attack = AttackType::ChargedHeavy;
