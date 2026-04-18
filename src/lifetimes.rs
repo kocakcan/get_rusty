@@ -459,6 +459,33 @@
 /// an error message suggesting the 'static lifetime results from attempting to create a dangling
 /// reference or a mismatch of the available lifetimes. In such cases, the solution is to fix those
 /// problems, not to specify the 'static lifetime.
+///
+/// Generic Type Parameters, Trait Bounds, and Lifetimes Together
+///
+/// Let's briefly look at the syntax of specifying generic type parameters, trait bounds, and
+/// lifetimes all in one function!
+///
+///     use std::fmt::Display;
+///
+///     fn longest_with_an_announcement<'a, T>(
+///         x: &'a str,
+///         y: &'a str,
+///         ann: T,
+///     ) -> &'a str
+///     where
+///         T: Display,
+///     {
+///         println!("Announcement! {ann}");
+///         if x.len() > y.len() { x } else { y }
+///     }
+/// This is the longest function from Listing 10-21 that returns the longer of two string slices.
+/// But now it has an extra parameter named ann of the generic type T, which can be filled in by any
+/// type that implements the Display trait as specified by the where clause. This extra parameter
+/// will be printed using {}, which is why the Display trait bound is necessary. Because lifetimes
+/// are a type of generic, the declarations of the lifetime parameter 'a and the generic type
+/// parameter T go in the same list inside the angle brackets after the function name.
+use std::fmt::Display;
+
 struct ImportantExcerpt<'a> {
     part: &'a str,
 }
@@ -475,6 +502,14 @@ impl<'a> ImportantExcerpt<'a> {
 }
 
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    if x.len() > y.len() { x } else { y }
+}
+
+fn longest_with_an_announcement<'a, T>(x: &'a str, y: &'a str, ann: T) -> &'a str
+where
+    T: Display,
+{
+    println!("Announcement: {ann}");
     if x.len() > y.len() { x } else { y }
 }
 
@@ -509,4 +544,5 @@ fn main() {
     println!("The longest string is {result}");
     println!("I will do {} damage to you", get_damage(&first_attack));
     i.announce_and_return_part("Click click boom!");
+    longest_with_an_announcement("Can", "Medet", "Stand off!");
 }
