@@ -419,9 +419,59 @@
 /// Let's look at some examples using the struct named ImportantExcerpt that we defined in Listing
 /// 10-24.
 ///
-/// First 
+/// First we'll use a method named level whose only parameter is a reference to self and whose
+/// return value is an i32, which is not a reference to anything:
+///
+///     impl<'a> ImportantExcerpt<'a> {
+///         fn level(&self) -> i32 {
+///             3
+///         }
+///     }
+/// The lifetime parameter declaration after impl and its use after the type name are required, but
+/// we're not required to annotate the lifetime of the reference to self because of the first
+/// elision rule.
+///
+/// Here is an example where the third lifetime elision rule applies:
+///
+///     impl<'a> ImportantExcerpt<'a> {
+///         fn announce_and_return_part(&self, announcement: &str) -> &str {
+///             println!("Attention please: {announcement}");
+///             self.part
+///         }
+///     }
+/// There are two input lifetimes, so Rust applies the first lifetime elision rule and gives both
+/// &self and announcement their own lifetimes. Then, because one of the parameters is &self, the
+/// return type gets the lifetime of &self, and all lifetimes have been accounted for.
+///
+/// The Static Lifetime
+///
+/// One special lifetime we need to discuss is 'static, which denotes that the affected reference
+/// can live for the entire duration of the program. All string literals have the 'static lifetime,
+/// which we can annotate as follows:
+///
+///     let s: &'static str = "I have a static lifetime.";
+/// The text of this string is stored directly in the program's binary, which is always available.
+/// Therefore, the lifetime of all string literal is 'static.
+///
+/// You might see suggestions in error messages to use the 'static lifetime. But before specifying
+/// 'static as the lifetime for a reference, think about whether the reference you have actually
+/// lives the entire lifetime of your program or not, and whether you want it to. Most of the time,
+/// an error message suggesting the 'static lifetime results from attempting to create a dangling
+/// reference or a mismatch of the available lifetimes. In such cases, the solution is to fix those
+/// problems, not to specify the 'static lifetime.
 struct ImportantExcerpt<'a> {
     part: &'a str,
+}
+
+impl<'a> ImportantExcerpt<'a> {
+    fn level(&self) -> i32 {
+        3
+    }
+
+    fn announce_and_return_part(&self, announcement: &str) -> &str {
+        println!("Attention please: {announcement}");
+        self.part
+    }
 }
 
 fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
@@ -458,4 +508,5 @@ fn main() {
     let first_attack = AttackType::ChargedHeavy;
     println!("The longest string is {result}");
     println!("I will do {} damage to you", get_damage(&first_attack));
+    i.announce_and_return_part("Click click boom!");
 }
