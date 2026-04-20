@@ -1,35 +1,40 @@
-enum Card {
+// pub trait FlavorText {
+//     pub fn text(&self) -> String;
+// }
+
+#[derive(Debug)]
+enum Card<'a> {
     Spell {
-        name: String,
+        name: &'a str,
         mana_cost: u8,
         spell_school: SpellSchool,
         class: Class,
-        text: String,
+        text: &'a str,
     },
     Minion {
-        name: String,
+        name: &'a str,
         mana_cost: u8,
         minion_type: MinionType,
         class: Class,
-        text: String,
+        text: &'a str,
     },
     Location {
-        name: String,
+        name: &'a str,
         mana_cost: u8,
         class: Class,
-        text: String,
+        text: &'a str,
     },
     Weapon {
-        name: String,
+        name: &'a str,
         mana_cost: u8,
         class: Class,
-        text: String,
+        text: &'a str,
     },
     Hero {
-        name: String,
+        name: &'a str,
         mana_cost: u8,
         class: Class,
-        text: String,
+        text: &'a str,
     },
 }
 
@@ -135,45 +140,45 @@ fn printd(deck: &[Card]) {
     }
 }
 
+// impl<'a> for Card {
+//     fn text(&self) -> String {
+//         match 
+//     }
+// }
+
 fn main() {
     let custom_deck: Vec<Card> = vec![
         Card::Minion {
-            name: String::from("Edwin van Cleef"),
+            name: "Edwin van Cleef",
             mana_cost: 3,
             minion_type: MinionType::Pirate,
             class: Class::Rogue,
-            text: String::from("Combo: Gain +2/+2 for each other card you've played this turn."),
+            text: "Combo: Gain +2/+2 for each other card you've played this turn.",
         },
         Card::Hero {
-            name: String::from("Deathwing, Worldbreaker"),
+            name: "Deathwing, Worldbreaker",
             mana_cost: 10,
             class: Class::Neutral,
-            text: String::from(
-                "Battlecry: Choose 1 Cataclysm to unleash! Herald twice to upgrade.",
-            ),
+            text: "Battlecry: Choose 1 Cataclysm to unleash! Herald twice to upgrade.",
         },
         Card::Weapon {
-            name: String::from("Kingsbane"),
+            name: "Kingsbane",
             mana_cost: 1,
             class: Class::Rogue,
-            text: String::from(
-                "Always keeps enhancements. Deathrattle: Shuffle this into your deck.",
-            ),
+            text: "Always keeps enhancements. Deathrattle: Shuffle this into your deck.",
         },
         Card::Location {
-            name: String::from("Amirdrassil"),
+            name: "Amirdrassil",
             mana_cost: 5,
             class: Class::Druid,
-            text: String::from(
-                "Summon a 1-Cost minion. Gain 1 Armor. Draw 1 card. Refresh 1 Mana Crystal. (Improves each use!)",
-            ),
+            text: "Summon a 1-Cost minion. Gain 1 Armor. Draw 1 card. Refresh 1 Mana Crystal. (Improves each use!)",
         },
         Card::Spell {
-            name: String::from("Preparation"),
+            name: "Preparation",
             mana_cost: 0,
             spell_school: SpellSchool::Shadow,
             class: Class::Rogue,
-            text: String::from("The next spell you cast this turn costs (2) less."),
+            text: "The next spell you cast this turn costs (2) less.",
         },
     ];
 
