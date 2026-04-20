@@ -1,6 +1,6 @@
-// pub trait FlavorText {
-//     pub fn text(&self) -> String;
-// }
+pub trait FlavorText {
+    fn text(&self) -> &str;
+}
 
 #[derive(Debug)]
 enum Card<'a> {
@@ -140,11 +140,17 @@ fn printd(deck: &[Card]) {
     }
 }
 
-// impl<'a> for Card {
-//     fn text(&self) -> String {
-//         match 
-//     }
-// }
+impl<'a> FlavorText for Card<'a> {
+    fn text(&self) -> &str {
+        match self {
+            Card::Spell { text, .. } |
+            Card::Minion { text, .. } |
+            Card::Location { text, .. } |
+            Card::Hero { text, .. } |
+            Card::Weapon { text, .. } => text
+        }
+    }
+}
 
 fn main() {
     let custom_deck: Vec<Card> = vec![
@@ -182,6 +188,7 @@ fn main() {
         },
     ];
 
-    printd(&custom_deck);
-    println!("There are {} cards in the deck", custom_deck.len());
+    for card in &custom_deck {
+        println!("{}", card.text());
+    }
 }
