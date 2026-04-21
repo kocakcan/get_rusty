@@ -21,3 +21,13 @@
 /// automatically generated for us. This module gives you a template for writing your tests so you
 /// don't have to look up the exact structure and syntax every time you start a new project. You can
 /// add as many additional test functions and as many test modules as you want!
+///
+/// Checking Results with the assert! Macro
+///
+/// The assert! macro, provided by the standard library, is useful when you want to ensure that
+/// some condition in a test evaluates to true. We give the assert! macro an argument that
+/// evaluates to a Boolean. If the value is true, nothing happens and the test passes. If the value
+/// is false, the assert! macro calls panic! to cause the test to fail. Using the assert! macro
+/// helps us check that our code is functioning in the way we intend.
+///
+/// Testing Equality with assert_eq! and assert_ne! Macros
