@@ -1,35 +1,39 @@
-pub enum Card {
+pub trait FlavorText {
+    fn text(&self) -> &str;
+}
+
+pub enum Card<'a> {
     Spell {
-        name: String,
+        name: &'a str,
         mana_cost: u8,
         spell_school: SpellSchool,
         class: Class,
-        text: String,
+        text: &'a str,
     },
     Minion {
-        name: String,
+        name: &'a str,
         mana_cost: u8,
         minion_type: MinionType,
         class: Class,
-        text: String,
+        text: &'a str,
     },
     Location {
-        name: String,
+        name: &'a str,
         mana_cost: u8,
         class: Class,
-        text: String,
+        text: &'a str,
     },
     Weapon {
-        name: String,
+        name: &'a str,
         mana_cost: u8,
         class: Class,
-        text: String,
+        text: &'a str,
     },
     Hero {
-        name: String,
+        name: &'a str,
         mana_cost: u8,
         class: Class,
-        text: String,
+        text: &'a str,
     },
 }
 
@@ -75,6 +79,18 @@ pub enum SpellSchool {
     Nature,
     Shadow,
     General,
+}
+
+impl<'a> FlavorText for Card<'a> {
+    fn text(&self) -> &str {
+        match self {
+            Card::Spell { text, .. }
+            | Card::Minion { text, .. }
+            | Card::Location { text, .. }
+            | Card::Hero { text, .. }
+            | Card::Weapon { text, .. } => text,
+        }
+    }
 }
 
 fn printc(card: &Card) {
