@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 pub trait FlavorText {
     fn text(&self) -> &str;
 }
@@ -139,6 +140,9 @@ fn printd(deck: &[Card]) {
         printc(card);
     }
 }
+=======
+use get_rusty::{Card, Class, MinionType, SpellSchool};
+>>>>>>> fb56868 (separated the concerns)
 
 impl<'a> FlavorText for Card<'a> {
     fn text(&self) -> &str {
@@ -188,7 +192,12 @@ fn main() {
         },
     ];
 
+<<<<<<< HEAD
     for card in &custom_deck {
         println!("{}", card.text());
     }
+=======
+    get_rusty::printd(&custom_deck);
+    println!("There are {} cards in the deck", custom_deck.len());
+>>>>>>> fb56868 (separated the concerns)
 }
