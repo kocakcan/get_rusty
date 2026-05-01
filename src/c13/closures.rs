@@ -183,6 +183,66 @@
 ///             .unwrap();
 ///     }
 ///     Listing 13-6: Using move to force the closure for the thread to take ownership of list
+///
+/// Moving Captured Values Out of Closures and the Fn Traits
+///
+/// Once a closure has captured ownership of a value from the environment where the closure is
+/// defined (thus affecting what, if anything, is moved into the closure), the code in the body of
+/// the closure defines what happens to the references or values when the closure is evaluated later
+/// (thus affecting what, if anything is moved out of the closure). A closure body can do any of the
+/// following: move a captured value out of the closure, mutate the captured value, neither move nor
+/// mutate the value, or capture nothing from the environment to begin with.
+///
+/// The way a closure captures and handles values from the environment affects which traits the
+/// closure implements, and traits are how functions and structs can specify what kinds of closures
+/// they can use. Closures will automatically implement one, two, or all three of these Fn traits,
+/// in an additive fashion, depending on how the closure's body handles the values:
+///
+///     1. FnOnce applies to closures that can be called once. All closures implement at least this
+///        trait because all closures can be called. A closure that moves captured values out of its
+///        body will only implement FnOnce and none of the other Fn traits, because it can only be
+///        called once.
+///     2. FnMut applies to closures that don't move captured values out of their body, but that
+///        might mutate the captured values. These closures can be called more than once.
+///     3. Fn applies to closures that don't move captured values out of their body and that don't
+///        mutate captured values, as well as closures that capture nothing from their environment.
+///        These closures can be called more than once without mutating their environment, which is
+///        important in cases such as calling a closure multple times concurrently.
+/// Let's look at the definition of the unwrap_or_else method on Option<T> that we used in Listing
+/// 13-1:
+///
+///     impl<T> Option<T> {
+///         pub fn unwrap_or_else<F>(self, f: F) -> T
+///         where:
+///             F: FnOnce() -> T
+///         {
+///             match self {
+///                 Some(x) => x,
+///                 None => f(),
+///             }
+///         }
+///     }
+/// Recall that T is the generic type representing the type of the value in the Some variant of an
+/// Option. That type T is also the return type of the unwrap_or_else function: code that calls
+/// unwrap_or_else on an Option<String>, for example, will get a String.
+///
+/// Next, notice that the unwrap_or_else function has the additional generic type parameter F. The F
+/// type is the type of the parameter named f, which is the closure we provide when calling
+/// unwrap_or_else.
+///
+/// The trait bound specified on the generic type F is FnOnce() -> T, which means F must be able to
+/// be called once, take no arguments, and return a T. Using FnOnce trait bound expresses the
+/// constraint that unwrap_or_else is only going to call f at most one time. In the body of
+/// unwrap_or_else, we can see that if the Option is Some, f won't be called. If the Option is None,
+/// f will be called once. Because all closures implement FnOnce, unwrap_or_else accepts all three
+/// kinds of closures and is as flexible as it can be.
+///
+/// Note: If what we want to do doesn't require capturing a value from the environment, we can use
+/// the name of the function rather than a closure. For example, we could call unwrap_or_else(Vec::new())
+/// on a Option<Vec<T>> value to get a new, empty vector if the value is None. The compiler
+/// automatically implements whichever of the Fn traits is applicable for a function definition.
+///
+///
 #[derive(Debug, PartialEq, Copy, Clone)]
 enum ShirtColor {
     Red,
@@ -223,15 +283,19 @@ fn main() {
 
     let user_pref1 = Some(ShirtColor::Red);
     let giveaway1 = store.giveaway(user_pref1);
-    println!("
+    println!(
+        "
         The user with preference {:?} gets {:?}",
-        user_pref1, giveaway1);
+        user_pref1, giveaway1
+    );
 
     let user_pref2 = None;
     let giveaway2 = store.giveaway(user_pref2);
-    println!("
+    println!(
+        "
         The user with preference {:?} gets {:?}",
-        user_pref2, giveaway2);
+        user_pref2, giveaway2
+    );
 
     let list = vec![1, 2, 3];
     println!("Before defining closure: {list:?}");
