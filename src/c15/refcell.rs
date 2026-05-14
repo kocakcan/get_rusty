@@ -94,7 +94,7 @@ where
     }
 
     pub fn set_value(&mut self, values: usize) {
-        self.value = value;
+        self.value = values;
         let percentage_of_max = self.value as f64 / self.max as f64;
         if percentage_of_max >= 1.0 {
             self.messenger.send("Error: You are over your quota!");
@@ -139,4 +139,67 @@ mod tests {
         limit_tracker.set_value(80);
         assert_eq!(mock_messenger.sent_messages.borrow().len(), 1);
     }
+}
+
+/// Tracking Borrows at Runtime
+///
+/// When creating immutable and mutable references, we use the & and &mut syntax, respectively.
+/// With RefCell<T>, we use the borrow and borrow_mut methods, which are part of the safe API that
+/// belongs to RefCell<T>. The borrow method returns the smart pointer type Ref<T>, and borrow_mut
+/// returns the smart pointer type RefMut<T>. Both types implement Deref, so we can treat them like
+/// regular references.
+///
+/// The RefCell<T> keeps track of how many Ref<T> and RefMut<T> smart pointers are currently
+/// active. Every time we call borrow, the RefCell<T> increases its count of how many immutable
+/// borrows are active. When a Ref<T> value goes out of scope, the count of immutable borrows goes
+/// down by 1. Just like the compile-time borrowing rules, RefCell<T> lets us have many immutable
+/// borrows or one mutable borrow at any point in time.
+///
+/// If we try to violate these rules, rather than getting a compiler error as we would with
+/// references, the implementation of RefCell<T> will panic at runtime. Listing 15-23 shows a
+/// modification of the implementation of send in Listing 15-22. We're deliberately trying to
+/// create two mutable borrows active for the same scope to illustrate that RefCell<T> prevents us
+/// from doing this at runtime.
+///
+///     impl Messenger for MockMessenger {
+///         fn send(&self, message: &str) {
+///             let mut one_borrow = self.sent_messages.borrow_mut();
+///             let mut two_borrow = self.sent_messages.borrow_mut();
+///
+///             one_borrow.push(String::from(message));
+///             two_borrow.push(String::from(message));
+///         }
+///     }
+///     Listing 15-23: Creating two mutable references in the same scope to see that RefCell<T>
+///     will panic
+/// The code above panics with the message already borrowed: BorrowMutError. This is how RefCell<T>
+/// handles violations of the borrowing rules at runtime.
+///
+/// Allowing Multiple Owners of Mutable Data
+///
+/// A common way to use RefCell<T> is in combination with Rc<T>. Recall that Rc<T> lets you have
+/// mutliple owners of some data, but it only gives immutable access to that data. If you have an
+/// Rc<T> that holds a RefCell<T>, you can get a value that can have multiple owners and that you
+/// can mutate.
+#[derive(Debug)]
+enum List {
+    Cons(Rc<RefCell<i32>>, Rc<List>),
+    Nil,
+}
+
+use crate::List::{Cons, Nil};
+use std::cell::RefCell;
+use std::rc::Rc;
+
+fn main() {
+    let value = Rc::new(RefCell::new(5));
+    let a = Rc::new(Cons(Rc::clone(&value), Rc::new(Nil)));
+    let b = Cons(Rc::new(RefCell::new(3)), Rc::clone(&a));
+    let c = Cons(Rc::new(RefCell::new(4)), Rc::clone(&a));
+
+    *value.borrow_mut() += 10;
+
+    println!("a after = {a:?}");
+    println!("b after = {b:?}");
+    println!("c after = {c:?}");
 }
