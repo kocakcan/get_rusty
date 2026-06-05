@@ -40,19 +40,49 @@
 /// osure containing the code we want to run in the new thread. The example in
 /// Listing 16-1 prints some text from a main thread and other text from a new
 /// thread.
+///
+/// Note that when the main thread of a Rust program completes, all spawned thr
+/// eads are shut down, whether or not they have finished running. The output f
+/// rom this program might be a little different every time.
+///
+/// The calls to thread::sleep force a thread to stop its execution for a short
+/// duration, allowing a different thread to run. The threads will probably tak
+/// e turns, but that isn't guaranteed: It depends on how your operating system
+/// schedules the threads.
+///
+/// Waiting for All Threads to Finish
+///
+/// The code in Listing 16-1 not only stops the spawned thread prematurely most
+/// of the time due to main thread ending, but because there is no guarantee on
+/// the order in which threads run, we also can't guarantee that the spawned th
+/// read will get to run at all!
+///
+/// We can fix the problem of the spawned thread not running or of it ending pr
+/// ematurely by saving the return value of thread::spawn in a variable. The re
+/// turn type of thread::spawn is JoinHandle<T>. A JoinHandle<T> is an owned va
+/// lue that, when we call the join method on it, will wait for its thread to f
+/// inish.
+///
+/// Using move Closures with Threads
+///
+/// We'll often use the move keyword with closures passed to thread::spawn beca
+/// use the closure will then take ownership of the values it uses from the env
+/// ironment, thus transferring ownership of those values from one thread to an
+/// other.
 use std::thread;
 use std::time::Duration;
 
 fn main() {
-    thread::spawn(|| {
-        for i in 1..10 {
-            println!("hi numner {i} from the spawned thread!");
+    let handle = thread::spawn(|| {
+        for i in 1..=10 {
+            println!("hi number {i} from the spawned thread!");
             thread::sleep(Duration::from_millis(1));
         }
     });
-
-    for i in 1..5 {
+    handle.join().unwrap(); /* main thread waits for spawned thread to finish */
+    for i in 1..=5 {
         println!("hi number {i} from the main thread!");
         thread::sleep(Duration::from_millis(1));
     }
+    // handle.join().unwrap();
 }
