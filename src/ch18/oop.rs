@@ -89,6 +89,178 @@
 /// or concrete type. Wherever we use a trait object, Rust's type system will ensure at compile time
 /// that any value used in that context will implement the trait object's trait. Consequently, we
 /// don't need to know all the possible types at compile time.
+///
+/// In a struct or enum, the data in the struct fields and the behaviour in impl blocks are
+/// separaterd, whereas in other Languages, the data and behaviour combined into one concept is
+/// often labeled an object. Trait objects differ from objects in other languages in that we can't
+/// add data to a trait object. Trait objects aren't as generally as objects in other languages:
+/// Their specific purpose is to allow abstraction across common behaviour.
+///
+///     pub trait Draw {
+///         fn draw(&self);
+///     }
+///     Listing 18-3: Definition of the Draw trait
+/// Listing 18-4 defines a struct named Screen that holds a vector named components. This vector is
+/// of type Box<dyn Draw>, which is a trait object; it's a stand-in for any type inside a Box that
+/// implements the Draw trait.
+///
+///     pub struct Screen {
+///         pub components: Vec<Box<dyn Draw>>,
+///     }
+///     Listing 18-4: Definition of the Screen struct with a component field holding a vector of
+///     trait objects that implement the Draw trait
+///
+///     impl Screen {
+///         pub fn run(&self) {
+///             for component in self.components.iter() {
+///                 component.draw();
+///             }
+///         }
+///     }
+///     Listing 18-5: A run method on Screen that calls the draw method on each component
+/// This works differently from defining a struct that uses a generic type parameter with trait
+/// bounds. A generic type parameter can be substituted with only one concrete type at a time,
+/// whereas trait objects allow for multiple concrete types to fill in for the trait object at
+/// runtime. For example, we could have defined the Screen struct using a generic type and a trait
+/// bound, as in Listing 18-6:
+///
+///     pub struct Screen<T: Draw> {
+///         pub components: Vec<T>,
+///     }
+///
+///     impl<T> Screen<T>
+///     where
+///         T: Draw,
+///     {
+///         pub fn run(&self) {
+///             for component in self.components.iter() {
+///                 component.draw();
+///             }
+///         }
+///     }
+///     Listing 18-6: An alternate implementation of the Screen struct and its run method using
+///     generics and trait bound
+/// This restricts us to a Screen instance that has a list of components all of
+/// type Button or all of type TextField. If you'll only ever have homogenous collections, using
+/// generics and trait bounds is preferable because the definitions will be monomorphized at compile
+/// time to use the concrete types.
+///
+/// On the other hand, with the method using trait objects, one Screen instance can hold a Vec<T>
+/// that contains a Box<Button> as well as a Box<TextField>.
+///
+/// Implementing the Trait
+///
+///     pub struct Button {
+///         pub width: u32,
+///         pub height: u32,
+///         pub label: String,
+///     }
+///
+///     impl Draw for Button {
+///         fn draw(&self) {
+///             // code to actually draw a button
+///         }
+///     }
+///     Listing 18-7: A Button struct that implements the Draw trait
+/// The width, height, and label fields on Button will differ from the fields on other components;
+/// For example, a TextField type might have those same fields plus a placeholder field. Each of the
+/// types we want to draw on the screen will implement the Draw trait but will use different code in
+/// the draw method to define how to draw that particular type, as Button has here. The Button type,
+/// for instance, might have an additional impl block containing methods related to what happpens
+/// when a user click the button.
+///
+///     use gui::Draw;
+///
+///     struct SelectBox {
+///         width: u32,
+///         height: u32,
+///         options: Vec<String>
+///     }
+///
+///     impl Draw for SelectBox {
+///         fn draw(&self) {
+///             // code to actually draw a select box
+///         }
+///     }
+///     Listing 18-8: Another crate using gui and implementing trait on a SelectBox struct
+///
+/// Using the Trait
+///
+/// To the Screen instance, they can add a SelectBox and a Button by putting each in a Box<T> to
+/// become a trait object. They can then call the run method on the Screen instance, which will call
+/// draw on each of the components.
+///
+///     use gui::{Button, Screen};
+///
+///     fn main() {
+///         let screen = Screen {
+///             components: vec![
+///                 Box::new(SelectBox {
+///                     width: 75,
+///                     height: 10,
+///                     options: vec![
+///                         String::from("Yes"),
+///                         String::from("Maybe"),
+///                         String::from("No"),
+///                     ],
+///                 }),
+///                 Box::new(Button {
+///                     width: 50,
+///                     height: 10,
+///                     label: String::from("OK"),
+///                 }),
+///             ],
+///         };
+///
+///         screen.run();
+///     }
+///     Listing 18-9: Using trait objects to store values of different types that implement the same
+///     trait
+/// The advantage of using trait objects and Rust's type system to write code similar to code using
+/// duck typing is that we never have to check whether a value implements a particular method at
+/// runtime or worry about getting errors if a value doesn't implement a method but we call it
+/// anyway. Rust won't compiler our code if the values don't implement the traits that the trait
+/// objects need.
+///
+/// Trait Objects and Type Inference
+///
+/// One downside to using trait objects is how they interact with type inference. For example,
+/// consider type inference for Vec<T>. When T is not a trait object, Rust just needs to know the
+/// type of a single element in the vector to infer T. So an empty vector causes a type inference
+/// error:
+///
+///     let v = vec![],
+///     // error: type annotations needed for `Vec<T>`
+/// But adding an element enables Rust to infer the type of the vector.
+/// Type inference is trickier for trait objects. For example, say we tried to factor the components
+/// array in Listing 18-9 into a separable variable, like this:
+///
+///     fn main() {
+///         let components = vec![
+///             Box::new(SelectBox { /* .. */ }),
+///             Box::new(Button { /* .. */ }),
+///         ];
+///         let screen = Screen { components };
+///         screen.run();
+///     }
+///     Listing 18-11: Factoring the components array causes a type error
+/// The compiler understands that the components vector must have the type Vec<Box<dyn Draw>>
+/// because that's specified in the Screen struct definition. But in Listing 18-11, the compiler
+/// loses that information at point where components is defined. To fix the issue, you have to give
+/// a hint to the type inference algorithm. That can either be via an explicit cast on any elements
+/// of the vector, like this:
+///
+///     let components = vec![
+///         Box::new(SelectBox { /* .. */ }) as Box<dyn Draw>,
+///         Box::new(SelectBox { /* .. */ }),
+///     ]
+/// Or it can be via a type annotation on the let-binding, like this:
+///
+///     let components: Vec<Box<dyn Draw>> = vec![
+///         Box::new(SelectBox { /* .. */ }),
+///         Box::new(SelectBox { /* .. */ }),
+///     ]
+/// Performing Dynamic Dispatch
 use std::fmt;
 
 pub struct AveragedCollection {
